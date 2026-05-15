@@ -19,12 +19,14 @@
 | D-013 | Fallback при пустом `en`-поле: возвращать `sq` (на Application слое) | Accepted |
 | D-014 | Subagent set на старте: `backend-dev` (Sonnet), `frontend-dev` (Sonnet), `reviewer` (Opus) | Accepted |
 | D-015 | Большой исходный ТЗ архивирован в `docs/_archive/`, не загружается рутинно | Accepted |
+| D-016 | Enums в PostgreSQL хранятся как `string` (читаемо, не нужна миграция при новых значениях) | Accepted |
+| D-017 | Backend integration tests: use-case unit tests с прямым InMemory DbContext вместо WebApplicationFactory+HTTP — из-за конфликта провайдеров EF Core при смешивании Npgsql+InMemory в одном DI-контейнере | Accepted |
 
 ## Open (требует решения)
 
 - D-Open-01: Auth механизм — cookie session vs JWT. Решить в TASK-012.
-- D-Open-02: Хранение enum в БД — `int` vs `string`. Решить в TASK-007.
-- D-Open-03: API client на фронте — fetch wrapper vs ky vs tanstack-query. Решить в TASK-008/009.
+- ~~D-Open-02~~ → закрыто как D-016 (string).
+- D-Open-03: API client на фронте — fetch wrapper vs ky vs tanstack-query. Решить в TASK-009.
 
 ## ADR шаблон
 

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
+import CartIcon from '@/features/cart/CartIcon';
 
 const locales = ['sq', 'en'] as const;
 type Locale = typeof locales[number];
@@ -50,8 +51,9 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Language switcher + mobile toggle */}
+          {/* Language switcher + cart + mobile toggle */}
           <div className="flex items-center gap-2">
+            <CartIcon locale={currentLocale} label={t('cart')} />
             {locales.map(locale => (
               <button
                 key={locale}
