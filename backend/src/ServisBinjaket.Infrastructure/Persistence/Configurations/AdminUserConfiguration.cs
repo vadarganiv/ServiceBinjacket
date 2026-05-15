@@ -14,5 +14,6 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
         builder.Property(x => x.DisplayName).IsRequired().HasMaxLength(200);
 
         builder.HasIndex(x => x.Email).IsUnique();
+        builder.Property(x => x.LastLogoutAt).IsRequired(false);
     }
 }

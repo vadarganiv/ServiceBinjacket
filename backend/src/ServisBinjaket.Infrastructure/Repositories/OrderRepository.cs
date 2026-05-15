@@ -74,4 +74,25 @@ public class OrderRepository : IOrderRepository
                 .ThenInclude(i => i.Product)
             .FirstOrDefaultAsync(o => o.Id == id, ct);
     }
+
+    public async Task<bool> UpdateStatusAsync(int id, OrderStatus status, CancellationToken ct = default)
+    {
+        var order = await _db.Orders.FindAsync([id], ct);
+        if (order is null) return false;
+        order.Status = status;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> UpdateCommentAsync(int id, string? comment, CancellationToken ct = default)
+    {
+        var order = await _db.Orders.FindAsync([id], ct);
+        if (order is null) return false;
+        order.AdminComment = comment;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public Task<int> CountAsync(CancellationToken ct = default) =>
+        _db.Orders.CountAsync(ct);
 }

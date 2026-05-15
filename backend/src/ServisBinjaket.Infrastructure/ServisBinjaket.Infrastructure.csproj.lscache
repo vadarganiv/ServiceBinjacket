@@ -53,10 +53,16 @@ TemporaryDependencyNodeTargetIdentifier=net9.0
 /warnaserror+:NU1605,SYSLIB0011
 
 [sourceFiles]
+Auth/
+ AdminUserRepository.cs
+ BcryptPasswordHasher.cs
+ JwtService.cs
 DependencyInjection.cs
 Migrations/
  20260515111152_InitialCreate.cs
  20260515111152_InitialCreate.Designer.cs
+ 20260515155143_AddAdminAuth.cs
+ 20260515155143_AddAdminAuth.Designer.cs
  AppDbContextModelSnapshot.cs
 obj/Debug/net9.0/
  .NETCoreApp,Version=v9.0.AssemblyAttributes.cs
@@ -255,6 +261,7 @@ Services/HealthService.cs
  System.Xml.XPath.XDocument.dll
  WindowsBase.dll
 <NUGET>/
+ bcrypt.net-next/4.0.3/lib/net6.0/BCrypt.Net-Next.dll
  fluentvalidation.dependencyinjectionextensions/12.1.1/lib/net8.0/FluentValidation.DependencyInjectionExtensions.dll
  fluentvalidation/12.1.1/lib/net8.0/FluentValidation.dll
  microsoft.entityframeworkcore.abstractions/9.0.5/lib/net8.0/Microsoft.EntityFrameworkCore.Abstractions.dll
@@ -269,8 +276,13 @@ Services/HealthService.cs
  microsoft.extensions.logging/9.0.5/lib/net9.0/Microsoft.Extensions.Logging.dll
  microsoft.extensions.options/9.0.5/lib/net9.0/Microsoft.Extensions.Options.dll
  microsoft.extensions.primitives/9.0.5/lib/net9.0/Microsoft.Extensions.Primitives.dll
+ microsoft.identitymodel.abstractions/8.0.1/lib/net9.0/Microsoft.IdentityModel.Abstractions.dll
+ microsoft.identitymodel.jsonwebtokens/8.0.1/lib/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
+ microsoft.identitymodel.logging/8.0.1/lib/net9.0/Microsoft.IdentityModel.Logging.dll
+ microsoft.identitymodel.tokens/8.0.1/lib/net9.0/Microsoft.IdentityModel.Tokens.dll
  npgsql.entityframeworkcore.postgresql/9.0.4/lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
  npgsql/9.0.3/lib/net8.0/Npgsql.dll
+ system.identitymodel.tokens.jwt/8.0.1/lib/net9.0/System.IdentityModel.Tokens.Jwt.dll
 
 [analyzerReferences]
 <DOTNET>/packs/Microsoft.NETCore.App.Ref/9.0.9/analyzers/dotnet/cs/

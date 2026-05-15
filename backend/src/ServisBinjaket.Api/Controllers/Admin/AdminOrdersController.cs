@@ -1,17 +1,26 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ServisBinjaket.Application.Common;
 using ServisBinjaket.Application.Interfaces;
 using ServisBinjaket.Application.Orders.DTOs;
 using ServisBinjaket.Domain.Enums;
+using System.Security.Claims;
 
 namespace ServisBinjaket.Api.Controllers.Admin;
 
 [ApiController]
 [Route("api/v1/admin/orders")]
+[Authorize]
 public class AdminOrdersController : ControllerBase
 {
     private readonly IOrderRepository _repository;
+    private readonly ILogger<AdminOrdersController> _logger;
 
-    public AdminOrdersController(IOrderRepository repository) => _repository = repository;
+    public AdminOrdersController(IOrderRepository repository, ILogger<AdminOrdersController> logger)
+    {
+        _repository = repository;
+        _logger = logger;
+    }
 
     /// <summary>List all orders (admin). TODO: requires auth (TASK-012).</summary>
     [HttpGet]
@@ -76,5 +85,30 @@ public class AdminOrdersController : ControllerBase
                 lineTotal = i.PriceSnapshot * i.Quantity,
             }),
         });
+    }
+
+    [HttpPut("{id:int}/status")]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateOrderStatusDto dto, CancellationToken ct)
+    {
+        if (!Enum.TryParse<OrderStatus>(dto.Status, ignoreCase: true, out var status))
+            return BadRequest(new { error = new { code = "VALIDATION_ERROR", message = "Invalid status value" } });
+
+        var ok = await _repository.UpdateStatusAsync(id, status, ct);
+        if (!ok)
+            return NotFound(new { error = new { code = "NOT_FOUND", message = "Order not found" } });
+
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        _logger.LogInformation("Order {OrderId} status changed to {Status} by admin {AdminId}", id, status, adminId);
+        return NoContent();
+    }
+
+    [HttpPut("{id:int}/comment")]
+    public async Task<IActionResult> UpdateComment(int id, [FromBody] UpdateCommentDto dto, CancellationToken ct)
+    {
+        var ok = await _repository.UpdateCommentAsync(id, dto.Comment, ct);
+        if (!ok)
+            return NotFound(new { error = new { code = "NOT_FOUND", message = "Order not found" } });
+
+        return NoContent();
     }
 }

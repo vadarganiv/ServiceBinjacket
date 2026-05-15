@@ -72,4 +72,25 @@ public class RepairRequestRepository : IRepairRequestRepository
             .Include(r => r.Files)
             .FirstOrDefaultAsync(r => r.Id == id, ct);
     }
+
+    public async Task<bool> UpdateStatusAsync(int id, RepairStatus status, CancellationToken ct = default)
+    {
+        var r = await _db.RepairRequests.FindAsync([id], ct);
+        if (r is null) return false;
+        r.Status = status;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> UpdateCommentAsync(int id, string? comment, CancellationToken ct = default)
+    {
+        var r = await _db.RepairRequests.FindAsync([id], ct);
+        if (r is null) return false;
+        r.AdminComment = comment;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public Task<int> CountAsync(CancellationToken ct = default) =>
+        _db.RepairRequests.CountAsync(ct);
 }

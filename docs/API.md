@@ -34,19 +34,21 @@ GET    /admin/products/{id}
 PUT    /admin/products/{id}                          update (включая localized fields)
 POST   /admin/products/{id}/publish
 POST   /admin/products/{id}/unpublish
-POST   /admin/products/{id}/images                   multipart
+POST   /admin/products/{id}/images                   multipart (image/jpeg|png|webp, ≤MAX_UPLOAD_MB)
 DELETE /admin/products/{id}/images/{imageId}
+GET    /admin/products/categories                   все категории (в т.ч. неопубликованные)
 ```
 
 ## Admin — services
 
 ```
-GET    /admin/services                              ?q=&isPublished=
+GET    /admin/services                              ?q=&isPublished=&page=&pageSize=
 POST   /admin/services
 GET    /admin/services/{id}
 PUT    /admin/services/{id}
 POST   /admin/services/{id}/publish
 POST   /admin/services/{id}/unpublish
+GET    /admin/services/categories                   все категории (в т.ч. неопубликованные)
 ```
 
 ## Admin — orders / repairs
@@ -54,13 +56,13 @@ POST   /admin/services/{id}/unpublish
 ```
 GET /admin/orders                                   ?status=&page=&pageSize=
 GET /admin/orders/{id}
-PUT /admin/orders/{id}/status                       {status}
-PUT /admin/orders/{id}/comment                      {comment}
+PUT /admin/orders/{id}/status                       {status: "New"|"Confirmed"|...}
+PUT /admin/orders/{id}/comment                      {comment: string|null}
 
 GET /admin/repair-requests                          ?status=&page=&pageSize=
 GET /admin/repair-requests/{id}
-PUT /admin/repair-requests/{id}/status              {status}
-PUT /admin/repair-requests/{id}/comment             {comment}
+PUT /admin/repair-requests/{id}/status              {status: "New"|"Contacted"|...}
+PUT /admin/repair-requests/{id}/comment             {comment: string|null}
 ```
 
 ## Error format (единый)

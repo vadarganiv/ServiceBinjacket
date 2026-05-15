@@ -53,12 +53,24 @@ TemporaryDependencyNodeTargetIdentifier=net9.0
 /warnaserror+:NU1605,SYSLIB0011
 
 [sourceFiles]
+Auth/DTOs/
+ AdminMeDto.cs
+ LoginRequestDto.cs
+Auth/UseCases/
+ GetCurrentAdminUseCase.cs
+ LoginAdminUseCase.cs
+Auth/Validators/LoginRequestValidator.cs
 Common/
  LocalizationHelper.cs
  PagedResult.cs
+ SlugHelper.cs
+ UpdateCommentDto.cs
 Interfaces/
+ IAdminUserRepository.cs
  IHealthService.cs
+ IJwtService.cs
  IOrderRepository.cs
+ IPasswordHasher.cs
  IProductRepository.cs
  IRepairRequestRepository.cs
  IServiceRepository.cs
@@ -72,38 +84,54 @@ Orders/DTOs/
  OrderCustomerCreateDto.cs
  OrderItemCreateDto.cs
  OrderResponseDto.cs
+ UpdateOrderStatusDto.cs
 Orders/
  UseCases/CreateOrderUseCase.cs
  Validators/OrderCreateValidator.cs
 Products/DTOs/
+ AdminProductDetailDto.cs
+ AdminProductListItemDto.cs
  ProductCategoryDto.cs
+ ProductCreateDto.cs
  ProductDetailDto.cs
  ProductImageDto.cs
  ProductListItemDto.cs
+ ProductUpdateDto.cs
 Products/
  Queries/GetProductsQuery.cs
  UseCases/
+  CreateProductUseCase.cs
   GetProductBySlugUseCase.cs
   GetProductCategoriesUseCase.cs
   GetProductsUseCase.cs
+  UpdateProductUseCase.cs
+ Validators/ProductCreateValidator.cs
 RepairRequests/DTOs/
  CustomerCreateDto.cs
  RepairRequestAdminListItemDto.cs
  RepairRequestCreateDto.cs
  RepairRequestResponseDto.cs
+ UpdateRepairStatusDto.cs
 RepairRequests/
  UseCases/CreateRepairRequestUseCase.cs
  Validators/RepairRequestCreateValidator.cs
 Services/DTOs/
+ AdminServiceDetailDto.cs
+ AdminServiceListItemDto.cs
  ServiceCategoryDto.cs
+ ServiceCreateDto.cs
  ServiceDetailDto.cs
  ServiceListItemDto.cs
+ ServiceUpdateDto.cs
 Services/
  Queries/GetServicesQuery.cs
  UseCases/
+  CreateServiceUseCase.cs
   GetServiceBySlugUseCase.cs
   GetServiceCategoriesUseCase.cs
   GetServicesUseCase.cs
+  UpdateServiceUseCase.cs
+ Validators/ServiceCreateValidator.cs
 
 [metadataReferences]
 ../ServisBinjaket.Domain/obj/Debug/net9.0/ref/ServisBinjaket.Domain.dll

@@ -54,6 +54,7 @@ TemporaryDependencyNodeTargetIdentifier=net9.0
 
 [sourceFiles]
 <NUGET>/microsoft.net.test.sdk/17.12.0/build/netcoreapp3.1/Microsoft.NET.Test.Sdk.Program.cs
+Auth/LoginAdminUseCaseTests.cs
 HealthEndpointTests.cs
 obj/Debug/net9.0/
  .NETCoreApp,Version=v9.0.AssemblyAttributes.cs
@@ -358,9 +359,11 @@ Products/
  System.Xml.XPath.XDocument.dll
  WindowsBase.dll
 <NUGET>/
+ bcrypt.net-next/4.0.3/lib/net6.0/BCrypt.Net-Next.dll
  fluentassertions/8.10.0/lib/net6.0/FluentAssertions.dll
  fluentvalidation.dependencyinjectionextensions/12.1.1/lib/net8.0/FluentValidation.DependencyInjectionExtensions.dll
  fluentvalidation/12.1.1/lib/net8.0/FluentValidation.dll
+ microsoft.aspnetcore.authentication.jwtbearer/9.0.5/lib/net9.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
  microsoft.aspnetcore.mvc.testing/9.0.5/lib/net9.0/Microsoft.AspNetCore.Mvc.Testing.dll
  microsoft.aspnetcore.testhost/9.0.5/lib/net9.0/Microsoft.AspNetCore.TestHost.dll
  microsoft.codecoverage/17.12.0/lib/netcoreapp3.1/Microsoft.VisualStudio.CodeCoverage.Shim.dll
@@ -381,6 +384,12 @@ Products/
  microsoft.extensions.logging/10.0.0/lib/net9.0/Microsoft.Extensions.Logging.dll
  microsoft.extensions.options/10.0.0/lib/net9.0/Microsoft.Extensions.Options.dll
  microsoft.extensions.primitives/10.0.0/lib/net9.0/Microsoft.Extensions.Primitives.dll
+ microsoft.identitymodel.abstractions/8.0.1/lib/net9.0/Microsoft.IdentityModel.Abstractions.dll
+ microsoft.identitymodel.jsonwebtokens/8.0.1/lib/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
+ microsoft.identitymodel.logging/8.0.1/lib/net9.0/Microsoft.IdentityModel.Logging.dll
+ microsoft.identitymodel.protocols.openidconnect/8.0.1/lib/net9.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+ microsoft.identitymodel.protocols/8.0.1/lib/net9.0/Microsoft.IdentityModel.Protocols.dll
+ microsoft.identitymodel.tokens/8.0.1/lib/net9.0/Microsoft.IdentityModel.Tokens.dll
  microsoft.openapi/2.4.1/lib/net8.0/Microsoft.OpenApi.dll
  microsoft.testplatform.testhost/17.12.0/lib/netcoreapp3.1/
   Microsoft.TestPlatform.CommunicationUtilities.dll
@@ -407,6 +416,7 @@ Products/
  swashbuckle.aspnetcore.swaggergen/10.1.7/lib/net9.0/Swashbuckle.AspNetCore.SwaggerGen.dll
  swashbuckle.aspnetcore.swaggerui/10.1.7/lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll
  system.diagnostics.diagnosticsource/10.0.0/lib/net9.0/System.Diagnostics.DiagnosticSource.dll
+ system.identitymodel.tokens.jwt/8.0.1/lib/net9.0/System.IdentityModel.Tokens.Jwt.dll
  system.io.pipelines/10.0.0/lib/net9.0/System.IO.Pipelines.dll
  system.text.encodings.web/10.0.0/lib/net9.0/System.Text.Encodings.Web.dll
  system.text.json/10.0.0/lib/net9.0/System.Text.Json.dll

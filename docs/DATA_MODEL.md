@@ -15,7 +15,7 @@
 | `Order` | заказ товара | `Id`, `CustomerId`, `DeliveryMethod` (enum), `PaymentMethod` (enum), `Status` (enum), `Subtotal`, `Currency`, `CustomerComment?`, `AdminComment?`, `CreatedAt`, `UpdatedAt` |
 | `OrderItem` | позиция в заказе | `Id`, `OrderId`, `ProductId`, `NameSnapshot`, `PriceSnapshot`, `Quantity` |
 | `Payment` | факт оплаты (заготовка) | `Id`, `OrderId?` или `RepairRequestId?`, `Method` (enum), `Status` (enum), `Amount`, `Currency`, `PaidAt?`, `Notes?` |
-| `AdminUser` | админ | `Id`, `Email`, `PasswordHash`, `DisplayName`, `IsActive`, `CreatedAt`, `LastLoginAt?` |
+| `AdminUser` | админ | `Id`, `Email`, `PasswordHash`, `DisplayName`, `IsActive`, `CreatedAt`, `LastLoginAt?`, `LastLogoutAt?` |
 
 `*` означает пару `*Sq` / `*En` (см. ниже).
 

@@ -21,10 +21,11 @@
 | D-015 | Большой исходный ТЗ архивирован в `docs/_archive/`, не загружается рутинно | Accepted |
 | D-016 | Enums в PostgreSQL хранятся как `string` (читаемо, не нужна миграция при новых значениях) | Accepted |
 | D-017 | Backend integration tests: use-case unit tests с прямым InMemory DbContext вместо WebApplicationFactory+HTTP — из-за конфликта провайдеров EF Core при смешивании Npgsql+InMemory в одном DI-контейнере | Accepted |
+| D-018 | Admin auth: JWT в HttpOnly cookie (Secure + SameSite=Lax). Logout инвалидируется через `AdminUser.LastLogoutAt` — при валидации токена `iat > LastLogoutAt`. | Accepted |
 
 ## Open (требует решения)
 
-- D-Open-01: Auth механизм — cookie session vs JWT. Решить в TASK-012.
+- ~~D-Open-01~~ → закрыто как D-018 (JWT в HttpOnly cookie).
 - ~~D-Open-02~~ → закрыто как D-016 (string).
 - D-Open-03: API client на фронте — fetch wrapper vs ky vs tanstack-query. Решить в TASK-009.
 

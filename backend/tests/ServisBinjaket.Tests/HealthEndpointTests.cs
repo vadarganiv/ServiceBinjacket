@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using FluentAssertions;
@@ -18,6 +19,11 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         _client = factory.WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Testing");
+            builder.ConfigureAppConfiguration((_, config) =>
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["JWT_SECRET"] = "test-secret-key-that-is-long-enough-32-chars"
+                }));
             builder.ConfigureServices(services =>
             {
                 var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));

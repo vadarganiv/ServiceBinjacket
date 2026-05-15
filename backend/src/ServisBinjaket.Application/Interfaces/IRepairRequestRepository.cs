@@ -11,4 +11,7 @@ public interface IRepairRequestRepository
     Task<(IReadOnlyList<RepairRequest> Items, int TotalCount)> GetAdminListAsync(
         RepairStatus? status, int page, int pageSize, CancellationToken ct = default);
     Task<RepairRequest?> GetAdminDetailAsync(int id, CancellationToken ct = default);
+    Task<bool> UpdateStatusAsync(int id, RepairStatus status, CancellationToken ct = default);
+    Task<bool> UpdateCommentAsync(int id, string? comment, CancellationToken ct = default);
+    Task<int> CountAsync(CancellationToken ct = default);
 }

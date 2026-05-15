@@ -49,6 +49,9 @@ namespace ServisBinjaket.Infrastructure.Migrations
                     b.Property<DateTime?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("LastLogoutAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(500)

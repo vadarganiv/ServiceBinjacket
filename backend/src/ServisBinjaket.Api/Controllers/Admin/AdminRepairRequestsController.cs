@@ -1,19 +1,25 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ServisBinjaket.Application.Common;
 using ServisBinjaket.Application.Interfaces;
 using ServisBinjaket.Application.RepairRequests.DTOs;
 using ServisBinjaket.Domain.Enums;
+using System.Security.Claims;
 
 namespace ServisBinjaket.Api.Controllers.Admin;
 
 [ApiController]
 [Route("api/v1/admin/repair-requests")]
+[Authorize]
 public class AdminRepairRequestsController : ControllerBase
 {
     private readonly IRepairRequestRepository _repository;
+    private readonly ILogger<AdminRepairRequestsController> _logger;
 
-    public AdminRepairRequestsController(IRepairRequestRepository repository)
+    public AdminRepairRequestsController(IRepairRequestRepository repository, ILogger<AdminRepairRequestsController> logger)
     {
         _repository = repository;
+        _logger = logger;
     }
 
     /// <summary>List all repair requests (admin). TODO: requires auth (TASK-012).</summary>
@@ -81,5 +87,30 @@ public class AdminRepairRequestsController : ControllerBase
                 uploadedAt = f.UploadedAt
             })
         });
+    }
+
+    [HttpPut("{id:int}/status")]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateRepairStatusDto dto, CancellationToken ct)
+    {
+        if (!Enum.TryParse<RepairStatus>(dto.Status, ignoreCase: true, out var status))
+            return BadRequest(new { error = new { code = "VALIDATION_ERROR", message = "Invalid status value" } });
+
+        var ok = await _repository.UpdateStatusAsync(id, status, ct);
+        if (!ok)
+            return NotFound(new { error = new { code = "NOT_FOUND", message = "Repair request not found" } });
+
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        _logger.LogInformation("RepairRequest {Id} status changed to {Status} by admin {AdminId}", id, status, adminId);
+        return NoContent();
+    }
+
+    [HttpPut("{id:int}/comment")]
+    public async Task<IActionResult> UpdateComment(int id, [FromBody] UpdateCommentDto dto, CancellationToken ct)
+    {
+        var ok = await _repository.UpdateCommentAsync(id, dto.Comment, ct);
+        if (!ok)
+            return NotFound(new { error = new { code = "NOT_FOUND", message = "Repair request not found" } });
+
+        return NoContent();
     }
 }

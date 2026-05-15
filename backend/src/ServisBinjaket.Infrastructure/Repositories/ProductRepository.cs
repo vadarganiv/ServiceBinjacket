@@ -10,10 +10,7 @@ public class ProductRepository : IProductRepository
 {
     private readonly AppDbContext _db;
 
-    public ProductRepository(AppDbContext db)
-    {
-        _db = db;
-    }
+    public ProductRepository(AppDbContext db) => _db = db;
 
     public async Task<(IReadOnlyList<Product> Items, int TotalCount)> GetProductsAsync(
         GetProductsQuery query, CancellationToken ct = default)
@@ -36,14 +33,9 @@ public class ProductRepository : IProductRepository
                 (p.ShortDescriptionEn != null && p.ShortDescriptionEn.ToLower().Contains(search)));
         }
 
-        if (query.MinPrice.HasValue)
-            q = q.Where(p => p.Price >= query.MinPrice.Value);
-
-        if (query.MaxPrice.HasValue)
-            q = q.Where(p => p.Price <= query.MaxPrice.Value);
-
-        if (query.Condition.HasValue)
-            q = q.Where(p => p.Condition == query.Condition.Value);
+        if (query.MinPrice.HasValue) q = q.Where(p => p.Price >= query.MinPrice.Value);
+        if (query.MaxPrice.HasValue) q = q.Where(p => p.Price <= query.MaxPrice.Value);
+        if (query.Condition.HasValue) q = q.Where(p => p.Condition == query.Condition.Value);
 
         if (query.InStock.HasValue)
         {
@@ -62,15 +54,10 @@ public class ProductRepository : IProductRepository
         };
 
         var total = await q.CountAsync(ct);
-
         var page = Math.Max(1, query.Page);
         var pageSize = Math.Clamp(query.PageSize, 1, 100);
 
-        var items = await q
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(ct);
-
+        var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
         return (items, total);
     }
 
@@ -98,4 +85,112 @@ public class ProductRepository : IProductRepository
             .OrderBy(c => c.SortOrder)
             .ToListAsync(ct);
     }
+
+    // ── Admin ──────────────────────────────────────────────────────────────────
+
+    public async Task<(IReadOnlyList<Product> Items, int TotalCount)> GetAdminListAsync(
+        string? q, bool? isPublished, int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _db.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var search = q.ToLower();
+            query = query.Where(p =>
+                p.NameSq.ToLower().Contains(search) ||
+                (p.NameEn != null && p.NameEn.ToLower().Contains(search)));
+        }
+
+        if (isPublished.HasValue)
+            query = query.Where(p => p.IsPublished == isPublished.Value);
+
+        var total = await query.CountAsync(ct);
+        var clampedPage = Math.Max(1, page);
+        var clampedSize = Math.Clamp(pageSize, 1, 100);
+
+        var items = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((clampedPage - 1) * clampedSize)
+            .Take(clampedSize)
+            .ToListAsync(ct);
+
+        return (items, total);
+    }
+
+    public async Task<Product?> GetAdminByIdAsync(int id, CancellationToken ct = default)
+    {
+        return await _db.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+    }
+
+    public async Task<Product> CreateAsync(Product product, CancellationToken ct = default)
+    {
+        _db.Products.Add(product);
+        await _db.SaveChangesAsync(ct);
+        return product;
+    }
+
+    public async Task UpdateAsync(Product product, CancellationToken ct = default)
+    {
+        _db.Products.Update(product);
+        await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> SetPublishedAsync(int id, bool isPublished, CancellationToken ct = default)
+    {
+        var product = await _db.Products.FindAsync([id], ct);
+        if (product is null) return false;
+        product.IsPublished = isPublished;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<ProductImage> AddImageAsync(ProductImage image, CancellationToken ct = default)
+    {
+        var maxOrder = await _db.ProductImages
+            .Where(i => i.ProductId == image.ProductId)
+            .Select(i => (int?)i.SortOrder)
+            .MaxAsync(ct) ?? -1;
+        image.SortOrder = maxOrder + 1;
+
+        _db.ProductImages.Add(image);
+        await _db.SaveChangesAsync(ct);
+        return image;
+    }
+
+    public async Task<bool> DeleteImageAsync(int imageId, CancellationToken ct = default)
+    {
+        var image = await _db.ProductImages.FindAsync([imageId], ct);
+        if (image is null) return false;
+        _db.ProductImages.Remove(image);
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> SlugExistsAsync(string slugSq, string? slugEn, int? excludeId, CancellationToken ct = default)
+    {
+        var q = _db.Products.AsQueryable();
+        if (excludeId.HasValue)
+            q = q.Where(p => p.Id != excludeId.Value);
+
+        return await q.AnyAsync(p =>
+            p.SlugSq == slugSq ||
+            (slugEn != null && (p.SlugSq == slugEn || p.SlugEn == slugEn)) ||
+            (p.SlugEn != null && p.SlugEn == slugSq), ct);
+    }
+
+    public async Task<IReadOnlyList<ProductCategory>> GetAllCategoriesAsync(CancellationToken ct = default)
+    {
+        return await _db.ProductCategories
+            .OrderBy(c => c.SortOrder)
+            .ToListAsync(ct);
+    }
+
+    public Task<int> CountAsync(CancellationToken ct = default) =>
+        _db.Products.CountAsync(ct);
 }
