@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "needs_native_review": true
+  },
+  "common": {
+    "loading": "Duke ngarkuar...",
+    "error": "Gabim",
+    "retry": "Provo përsëri",
+    "cancel": "Anulo",
+    "save": "Ruaj",
+    "delete": "Fshi",
+    "edit": "Ndrysho",
+    "view": "Shiko",
+    "back": "Kthehu",
+    "learnMore": "Mëso më shumë",
+    "contactUs": "Na kontaktoni"
+  },
+  "nav": {
+    "brand": "Servis Binjaket",
+    "home": "Kryefaqja",
+    "products": "Produktet",
+    "services": "Shërbimet",
+    "repair": "Riparim",
+    "openMenu": "Hap menunë",
+    "closeMenu": "Mbyll menunë"
+  },
+  "home": {
+    "title": "Servis Binjaket",
+    "subtitle": "Elektronikë dhe shërbime riparimi në Durrës"
+  },
+  "errors": {
+    "notFound": "Faqja nuk u gjet",
+    "serverError": "Gabim i serverit",
+    "tryAgain": "Provo përsëri"
+  }
+}

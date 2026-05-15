@@ -1,0 +1,61 @@
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-servis_binjaket}
+      POSTGRES_USER: ${POSTGRES_USER:-servis_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-servis_user} -d ${POSTGRES_DB:-servis_binjaket}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend (ASP.NET Core) ──────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DATABASE_CONNECTION_STRING: ${DATABASE_CONNECTION_STRING:-Host=postgres;Port=5432;Database=servis_binjaket;Username=servis_user;Password=change_me}
+      JWT_SECRET: ${JWT_SECRET:-change_me_long_random_secret_at_least_32_bytes}
+      ADMIN_DEFAULT_EMAIL: ${ADMIN_DEFAULT_EMAIL:-admin@example.com}
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:-change_me}
+      UPLOADS_ROOT: ${UPLOADS_ROOT:-/app/uploads}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      WHATSAPP_PHONE: ${WHATSAPP_PHONE:-+355000000000}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Frontend (Next.js) ──────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        API_URL: ${API_URL:-http://backend:5000}
+    restart: unless-stopped
+    environment:
+      API_URL: ${API_URL:-http://backend:5000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads_data:

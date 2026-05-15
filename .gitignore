@@ -1,0 +1,76 @@
+# ── .NET ──────────────────────────────────────────────────────────────────────
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+_ReSharper*/
+*.DotSettings.user
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.nuget.props
+*.nuget.targets
+.nuget/
+packages/
+
+# EF Core migrations temp
+/backend/**/*.db
+/backend/**/*.db-shm
+/backend/**/*.db-wal
+
+# ── Node / Next.js ────────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.turbo/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Uploads (runtime volume, not tracked) ─────────────────────────────────────
+uploads/
+/backend/uploads/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+# VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# JetBrains / Rider
+.idea/
+*.iml
+
+# Visual Studio
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.cachefile
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+nginx/certs/
+backups/
+*.sql.gz
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log

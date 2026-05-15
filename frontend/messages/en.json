@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "todo_en": false
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "back": "Back",
+    "learnMore": "Learn more",
+    "contactUs": "Contact us"
+  },
+  "nav": {
+    "brand": "Servis Binjaket",
+    "home": "Home",
+    "products": "Products",
+    "services": "Services",
+    "repair": "Repair",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "home": {
+    "title": "Servis Binjaket",
+    "subtitle": "Electronics and repair services in Durrës"
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "serverError": "Server error",
+    "tryAgain": "Try again"
+  }
+}
