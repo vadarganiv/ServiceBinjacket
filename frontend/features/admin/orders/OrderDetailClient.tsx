@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import StatusBadge from '@/features/admin/components/StatusBadge';
+import { toWhatsAppNumber } from '@/features/admin/lib/api';
 
 const ORDER_STATUSES = [
   'New', 'Confirmed', 'Preparing', 'OutForDelivery',
@@ -36,27 +37,30 @@ interface OrderDetail {
 }
 
 export default function OrderDetailClient({ order }: { order: OrderDetail }) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-
   const [status, setStatus] = useState(order.status);
   const [comment, setComment] = useState(order.adminComment ?? '');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [msgOk, setMsgOk] = useState(true);
 
   const waPhone = order.customer.whatsAppPhone ?? order.customer.phone;
-  const whatsappLink = `https://wa.me/${waPhone.replace(/\D/g, '')}`;
+  const whatsappLink = `https://wa.me/${toWhatsAppNumber(waPhone)}`;
 
   async function saveStatus() {
     setSaving(true);
     setMsg('');
     try {
-      const res = await fetch(`${apiUrl}/api/v1/admin/orders/${order.id}/status`, {
+      const res = await fetch(`/api/v1/admin/orders/${order.id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ status }),
       });
-      setMsg(res.ok ? 'Status updated' : 'Error updating status');
+      setMsgOk(res.ok);
+      setMsg(res.ok ? 'Status updated' : `Error updating status (${res.status})`);
+    } catch {
+      setMsgOk(false);
+      setMsg('Network error — status not saved');
     } finally {
       setSaving(false);
     }
@@ -66,13 +70,17 @@ export default function OrderDetailClient({ order }: { order: OrderDetail }) {
     setSaving(true);
     setMsg('');
     try {
-      const res = await fetch(`${apiUrl}/api/v1/admin/orders/${order.id}/comment`, {
+      const res = await fetch(`/api/v1/admin/orders/${order.id}/comment`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ comment }),
       });
-      setMsg(res.ok ? 'Comment saved' : 'Error saving comment');
+      setMsgOk(res.ok);
+      setMsg(res.ok ? 'Comment saved' : `Error saving comment (${res.status})`);
+    } catch {
+      setMsgOk(false);
+      setMsg('Network error — comment not saved');
     } finally {
       setSaving(false);
     }
@@ -181,7 +189,7 @@ export default function OrderDetailClient({ order }: { order: OrderDetail }) {
               Save comment
             </button>
           </div>
-          {msg && <p className="text-sm text-green-600">{msg}</p>}
+          {msg && <p className={`text-sm ${msgOk ? 'text-green-600' : 'text-red-600'}`}>{msg}</p>}
         </div>
       </div>
 

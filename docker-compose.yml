@@ -26,6 +26,8 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:5000"
+      ConnectionStrings__DefaultConnection: ${DATABASE_CONNECTION_STRING:-Host=postgres;Port=5432;Database=servis_binjaket;Username=servis_user;Password=change_me}
       DATABASE_CONNECTION_STRING: ${DATABASE_CONNECTION_STRING:-Host=postgres;Port=5432;Database=servis_binjaket;Username=servis_user;Password=change_me}
       JWT_SECRET: ${JWT_SECRET:-change_me_long_random_secret_at_least_32_bytes}
       ADMIN_DEFAULT_EMAIL: ${ADMIN_DEFAULT_EMAIL:-admin@example.com}
@@ -50,7 +52,11 @@ services:
         API_URL: ${API_URL:-http://backend:5000}
     restart: unless-stopped
     environment:
-      API_URL: ${API_URL:-http://backend:5000}
+      API_URL: "http://backend:5000"
+      WHATSAPP_PHONE: ${WHATSAPP_PHONE:-}
+      PUBLIC_ADDRESS: ${PUBLIC_ADDRESS:-}
+      PUBLIC_PHONE: ${PUBLIC_PHONE:-}
+      PUBLIC_HOURS: ${PUBLIC_HOURS:-}
     ports:
       - "3000:3000"
     depends_on:

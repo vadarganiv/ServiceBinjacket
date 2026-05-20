@@ -29,7 +29,6 @@ interface Props {
   mode: 'create' | 'edit';
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
 const inputCls = 'w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -85,8 +84,8 @@ export default function ServiceForm({ categories, initialData, mode }: Props) {
     };
 
     const url = mode === 'create'
-      ? `${API_URL}/api/v1/admin/services`
-      : `${API_URL}/api/v1/admin/services/${initialData?.id}`;
+      ? '/api/v1/admin/services'
+      : `/api/v1/admin/services/${initialData?.id}`;
 
     const res = await fetch(url, {
       method: mode === 'create' ? 'POST' : 'PUT',

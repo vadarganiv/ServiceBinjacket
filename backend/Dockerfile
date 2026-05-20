@@ -15,7 +15,7 @@ RUN dotnet restore
 # Copy the rest and publish
 COPY . .
 RUN dotnet publish src/ServisBinjaket.Api/ServisBinjaket.Api.csproj \
-    -c Release -o /app/publish --no-restore
+    -c Release -o /app/publish
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime

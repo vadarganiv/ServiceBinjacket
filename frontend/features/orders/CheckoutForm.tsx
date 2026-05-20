@@ -6,8 +6,6 @@ import { useTranslations } from 'next-intl';
 import { useCart } from '@/features/cart/CartContext';
 import type { DeliveryMethod, PaymentMethod, OrderResponse } from '@/lib/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-
 interface Props {
   locale: string;
 }
@@ -76,7 +74,7 @@ export default function CheckoutForm({ locale }: Props) {
     setErrors({});
 
     try {
-      const res = await fetch(`${API_URL}/api/v1/orders`, {
+      const res = await fetch('/api/v1/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

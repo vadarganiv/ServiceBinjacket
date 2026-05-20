@@ -55,7 +55,7 @@ public class AuthController : ControllerBase
         Response.Cookies.Append(CookieName, result.Token!, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
+            Secure = Request.IsHttps,
             SameSite = SameSiteMode.Lax,
             Expires = DateTimeOffset.UtcNow.AddHours(8),
             Path = "/"

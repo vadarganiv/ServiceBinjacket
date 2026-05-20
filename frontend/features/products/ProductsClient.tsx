@@ -10,9 +10,9 @@ import ProductCardSkeleton from './ProductCardSkeleton';
 
 const SORT_OPTIONS: Array<{ value: SortOption; labelKey: string }> = [
   { value: 'newest', labelKey: 'sortNewest' },
-  { value: 'price_asc', labelKey: 'sortPriceAsc' },
-  { value: 'price_desc', labelKey: 'sortPriceDesc' },
-  { value: 'name_asc', labelKey: 'sortNameAsc' },
+  { value: 'price-asc', labelKey: 'sortPriceAsc' },
+  { value: 'price-desc', labelKey: 'sortPriceDesc' },
+  { value: 'name-asc', labelKey: 'sortNameAsc' },
 ];
 
 interface Props {

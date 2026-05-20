@@ -37,7 +37,7 @@ export interface PagedResult<T> {
 
 export type ProductCondition = 'New' | 'Used' | 'Refurbished' | 'Unknown';
 
-export type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'name_asc';
+export type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name-asc';
 
 export interface ServiceCategory {
   id: number;

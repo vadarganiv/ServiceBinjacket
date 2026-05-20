@@ -8,8 +8,6 @@ interface Props {
   isPublished: boolean;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-
 export default function ServicePublishToggle({ serviceId, isPublished }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -18,7 +16,7 @@ export default function ServicePublishToggle({ serviceId, isPublished }: Props) 
   async function toggle() {
     setLoading(true);
     const action = published ? 'unpublish' : 'publish';
-    const res = await fetch(`${API_URL}/api/v1/admin/services/${serviceId}/${action}`, {
+    const res = await fetch(`/api/v1/admin/services/${serviceId}/${action}`, {
       method: 'POST',
       credentials: 'include',
     });

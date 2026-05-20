@@ -22,8 +22,7 @@ export default function AdminShell({ adminEmail, adminName, children }: Props) {
   const router = useRouter();
 
   async function handleLogout() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-    await fetch(`${apiUrl}/api/v1/auth/logout`, {
+    await fetch('/api/v1/auth/logout', {
       method: 'POST',
       credentials: 'include',
     });

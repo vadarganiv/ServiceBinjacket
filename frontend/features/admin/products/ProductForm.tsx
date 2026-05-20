@@ -34,8 +34,6 @@ interface Props {
   mode: 'create' | 'edit';
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-
 export default function ProductForm({ categories, initialData, mode }: Props) {
   const router = useRouter();
 
@@ -88,8 +86,8 @@ export default function ProductForm({ categories, initialData, mode }: Props) {
     };
 
     const url = mode === 'create'
-      ? `${API_URL}/api/v1/admin/products`
-      : `${API_URL}/api/v1/admin/products/${initialData?.id}`;
+      ? '/api/v1/admin/products'
+      : `/api/v1/admin/products/${initialData?.id}`;
 
     const res = await fetch(url, {
       method: mode === 'create' ? 'POST' : 'PUT',

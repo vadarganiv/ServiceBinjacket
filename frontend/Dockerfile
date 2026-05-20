@@ -1,11 +1,11 @@
 # ── Dependencies stage ────────────────────────────────────────────────────────
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
 # ── Build stage ───────────────────────────────────────────────────────────────
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -14,16 +14,23 @@ COPY . .
 ARG API_URL=http://backend:5000
 ENV API_URL=$API_URL
 
-RUN npm run build
+RUN mkdir -p /app/public && npm run build
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=build /app/public ./public
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
+RUN addgroup -S -g 1001 nextjs \
+    && adduser -S -u 1001 -G nextjs nextjs \
+    && mkdir -p /app/.next/cache /tmp \
+    && chown -R nextjs:nextjs /app /tmp
+
+COPY --from=build --chown=nextjs:nextjs /app/public ./public
+COPY --from=build --chown=nextjs:nextjs /app/.next/standalone ./
+COPY --from=build --chown=nextjs:nextjs /app/.next/static ./.next/static
+
+USER nextjs
 
 EXPOSE 3000
 ENV PORT=3000

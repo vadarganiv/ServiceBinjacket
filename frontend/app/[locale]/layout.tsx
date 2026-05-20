@@ -3,6 +3,8 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import WhatsAppFab from '@/components/WhatsAppFab';
 import { CartProvider } from '@/features/cart/CartContext';
 
 type Props = {
@@ -18,6 +20,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   }
 
   const messages = await getMessages();
+  const whatsappPhone = process.env.WHATSAPP_PHONE ?? '';
 
   return (
     <html lang={locale}>
@@ -26,6 +29,8 @@ export default async function LocaleLayout({ children, params }: Props) {
           <CartProvider>
             <Header />
             <main className="min-h-screen">{children}</main>
+            <Footer locale={locale} />
+            <WhatsAppFab phone={whatsappPhone} locale={locale} />
           </CartProvider>
         </NextIntlClientProvider>
       </body>

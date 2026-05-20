@@ -22,7 +22,7 @@ public class AdminRepairRequestsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>List all repair requests (admin). TODO: requires auth (TASK-012).</summary>
+    /// <summary>List all repair requests (admin). TODO: requires auth.</summary>
     [HttpGet]
     public async Task<IActionResult> GetList(
         [FromQuery] RepairStatus? status = null,
@@ -48,7 +48,7 @@ public class AdminRepairRequestsController : ControllerBase
         return Ok(new { items = dtos, totalCount = total, page, pageSize });
     }
 
-    /// <summary>Get repair request detail (admin). TODO: requires auth (TASK-012).</summary>
+    /// <summary>Get repair request detail (admin). TODO: requires auth.</summary>
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetDetail(int id, CancellationToken ct)
     {

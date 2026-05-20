@@ -5,9 +5,6 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { ServiceListItem, RepairRequestResponse } from '@/lib/types';
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-
 interface Props {
   locale: string;
   services: ServiceListItem[];
@@ -94,7 +91,7 @@ export default function RepairRequestForm({ locale, services }: Props) {
         consent: form.consent,
       };
 
-      const res = await fetch(`${API_URL}/api/v1/repair-requests`, {
+      const res = await fetch('/api/v1/repair-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -112,7 +109,7 @@ export default function RepairRequestForm({ locale, services }: Props) {
       if (selectedFiles && selectedFiles.length > 0) {
         const fd = new FormData();
         Array.from(selectedFiles).forEach(f => fd.append('files', f));
-        await fetch(`${API_URL}/api/v1/repair-requests/${created.id}/files`, {
+        await fetch(`/api/v1/repair-requests/${created.id}/files`, {
           method: 'POST',
           body: fd,
         });

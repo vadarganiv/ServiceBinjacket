@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import { apiFetch } from '@/lib/api';
 import type { ProductDetail } from '@/lib/types';
 import AddToCartButton from '@/features/products/AddToCartButton';
+import ProductImageGallery from '@/features/products/ProductImageGallery';
 
 type Props = {
   params: Promise<{ locale: string; slug: string }>;
@@ -62,8 +63,6 @@ export default async function ProductDetailPage({ params }: Props) {
 
   if (!product) notFound();
 
-  const mainImage = product.images?.[0] ?? product.image;
-
   return (
     <div className="container mx-auto px-4 py-8">
       <Link
@@ -78,32 +77,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
         {/* Image */}
-        <div className="flex flex-col gap-3">
-          <div className="aspect-square bg-muted rounded-2xl overflow-hidden">
-            {mainImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={mainImage.path} alt={mainImage.alt} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <svg className="w-24 h-24 text-muted-foreground opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-            )}
-          </div>
-
-          {product.images && product.images.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
-              {product.images.slice(0, 4).map((img, i) => (
-                <div key={i} className="aspect-square bg-muted rounded-lg overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.path} alt={img.alt} className="w-full h-full object-cover" />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProductImageGallery images={product.images ?? []} fallbackImage={product.image} />
 
         {/* Info */}
         <div className="flex flex-col gap-5">

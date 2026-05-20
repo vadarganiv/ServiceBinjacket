@@ -17,17 +17,16 @@
 | D-011 | Clean Architecture в backend (Domain/Application/Infrastructure/Api) | Accepted |
 | D-012 | i18n на фронте: next-intl + JSON-файлы `messages/{sq,en}.json` | Accepted |
 | D-013 | Fallback при пустом `en`-поле: возвращать `sq` (на Application слое) | Accepted |
-| D-014 | Subagent set на старте: `backend-dev` (Sonnet), `frontend-dev` (Sonnet), `reviewer` (Opus) | Accepted |
-| D-015 | Большой исходный ТЗ архивирован в `docs/_archive/`, не загружается рутинно | Accepted |
 | D-016 | Enums в PostgreSQL хранятся как `string` (читаемо, не нужна миграция при новых значениях) | Accepted |
 | D-017 | Backend integration tests: use-case unit tests с прямым InMemory DbContext вместо WebApplicationFactory+HTTP — из-за конфликта провайдеров EF Core при смешивании Npgsql+InMemory в одном DI-контейнере | Accepted |
 | D-018 | Admin auth: JWT в HttpOnly cookie (Secure + SameSite=Lax). Logout инвалидируется через `AdminUser.LastLogoutAt` — при валидации токена `iat > LastLogoutAt`. | Accepted |
+| D-019 | Первый прод-деплой — HTTP на IP без домена (заказчик домен ещё не купил). nginx.conf содержит готовый HTTPS-блок закомментированным — включается заменой `YOUR_DOMAIN` + раскомментированием. | Accepted |
 
 ## Open (требует решения)
 
 - ~~D-Open-01~~ → закрыто как D-018 (JWT в HttpOnly cookie).
 - ~~D-Open-02~~ → закрыто как D-016 (string).
-- D-Open-03: API client на фронте — fetch wrapper vs ky vs tanstack-query. Решить в TASK-009.
+- D-Open-03: API client на фронте — fetch wrapper vs ky vs tanstack-query. Решить позже.
 
 ## ADR шаблон
 

@@ -59,11 +59,8 @@ frontend/
 
 ```
 Servis Binjaket/
-  CLAUDE.md
-  .claude/
-    agents/, skills/
   docs/
-    *.md, _archive/
+    *.md
   backend/
     ServisBinjaket.sln
     src/

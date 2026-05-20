@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toWhatsAppNumber } from '@/features/admin/lib/api';
 
 const REPAIR_STATUSES = [
   'New', 'Contacted', 'WaitingForDevice', 'Received', 'Diagnostics',
@@ -45,28 +46,31 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-
 export default function RepairDetailClient({ repair }: { repair: RepairDetail }) {
   const [status, setStatus] = useState(repair.status);
   const [comment, setComment] = useState(repair.adminComment ?? '');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [msgOk, setMsgOk] = useState(true);
 
   const waPhone = repair.customer.whatsAppPhone ?? repair.customer.phone;
-  const whatsappLink = `https://wa.me/${waPhone.replace(/\D/g, '')}`;
+  const whatsappLink = `https://wa.me/${toWhatsAppNumber(waPhone)}`;
 
   async function saveStatus() {
     setSaving(true);
     setMsg('');
     try {
-      const res = await fetch(`${API_URL}/api/v1/admin/repair-requests/${repair.id}/status`, {
+      const res = await fetch(`/api/v1/admin/repair-requests/${repair.id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ status }),
       });
-      setMsg(res.ok ? 'Status updated' : 'Error updating status');
+      setMsgOk(res.ok);
+      setMsg(res.ok ? 'Status updated' : `Error updating status (${res.status})`);
+    } catch {
+      setMsgOk(false);
+      setMsg('Network error — status not saved');
     } finally {
       setSaving(false);
     }
@@ -76,13 +80,17 @@ export default function RepairDetailClient({ repair }: { repair: RepairDetail })
     setSaving(true);
     setMsg('');
     try {
-      const res = await fetch(`${API_URL}/api/v1/admin/repair-requests/${repair.id}/comment`, {
+      const res = await fetch(`/api/v1/admin/repair-requests/${repair.id}/comment`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ comment }),
       });
-      setMsg(res.ok ? 'Comment saved' : 'Error saving comment');
+      setMsgOk(res.ok);
+      setMsg(res.ok ? 'Comment saved' : `Error saving comment (${res.status})`);
+    } catch {
+      setMsgOk(false);
+      setMsg('Network error — comment not saved');
     } finally {
       setSaving(false);
     }
@@ -188,7 +196,7 @@ export default function RepairDetailClient({ repair }: { repair: RepairDetail })
               Save comment
             </button>
           </div>
-          {msg && <p className="text-sm text-green-600">{msg}</p>}
+          {msg && <p className={`text-sm ${msgOk ? 'text-green-600' : 'text-red-600'}`}>{msg}</p>}
         </div>
       </div>
 
@@ -199,7 +207,7 @@ export default function RepairDetailClient({ repair }: { repair: RepairDetail })
           <div className="divide-y divide-gray-200">
             {repair.files.map(f => {
               const isImage = f.mimeType.startsWith('image/');
-              const fileUrl = `${API_URL}${f.path}`;
+              const fileUrl = f.path;
               return (
                 <div key={f.id} className="flex items-center gap-4 px-4 py-3">
                   {isImage && (

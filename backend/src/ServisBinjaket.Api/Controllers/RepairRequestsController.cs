@@ -62,7 +62,7 @@ public class RepairRequestsController : ControllerBase
     /// <summary>Upload files to an existing repair request (multipart/form-data).</summary>
     [HttpPost("{id:int}/files")]
     [Consumes("multipart/form-data")]
-    [RequestFormLimits(MultipartBodyLengthLimit = 50 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]
     [DisableRequestSizeLimit]
     public async Task<IActionResult> UploadFiles(int id, IFormFileCollection files, CancellationToken ct)
     {

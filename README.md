@@ -65,21 +65,46 @@ cd frontend && npm run build
 
 ---
 
-## Структура репозитория
+## Production deploy
 
+Полная инструкция: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
+
+### Быстрый старт (VPS, HTTP без домена)
+
+```bash
+# 1. Клонировать репо на VPS
+git clone <repo-url> /opt/servis-binjaket
+cd /opt/servis-binjaket
+
+# 2. Настроить env (заполнить все change_me)
+cp .env.example .env
+nano .env
+
+# 3. Запустить
+docker compose -f docker-compose.prod.yml up -d --build
+
+# 4. Проверить
+curl http://<VPS_IP>/health
 ```
-backend/      — ASP.NET Core solution (Clean Architecture)
-frontend/     — Next.js app (App Router + i18n)
-nginx/        — nginx.conf для production
-scripts/      — backup-db.sh, restore-db.sh
-docs/         — проектная документация
-docker-compose.yml       — локальная разработка
-docker-compose.prod.yml  — production (создаётся в TASK-014)
-.env.example             — шаблон переменных окружения
-```
+
+Сайт будет доступен по: `http://<VPS_IP>/`
+
+### Переход на HTTPS (когда появится домен)
+
+Пошаговая инструкция в [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — раздел «Переход на HTTPS».
 
 ---
 
-## Production deploy
+## Структура репозитория
 
-Описан в [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+```
+backend/                  — ASP.NET Core solution (Clean Architecture)
+frontend/                 — Next.js app (App Router + i18n)
+nginx/nginx.conf          — Nginx reverse proxy (HTTP + закомментированный HTTPS)
+scripts/backup-db.sh      — Backup базы данных
+scripts/restore-db.sh     — Restore базы данных
+docs/                     — Проектная документация
+docker-compose.yml        — Локальная разработка
+docker-compose.prod.yml   — Production
+.env.example              — Шаблон переменных окружения
+```

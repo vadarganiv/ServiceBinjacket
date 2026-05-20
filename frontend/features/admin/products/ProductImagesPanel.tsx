@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface ProductImage {
@@ -15,14 +15,16 @@ interface Props {
   images: ProductImage[];
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-
 export default function ProductImagesPanel({ productId, images: initialImages }: Props) {
   const router = useRouter();
   const [images, setImages] = useState(initialImages);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setImages(initialImages);
+  }, [initialImages]);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -33,7 +35,7 @@ export default function ProductImagesPanel({ productId, images: initialImages }:
     const formData = new FormData();
     for (const f of files) formData.append('files', f);
 
-    const res = await fetch(`${API_URL}/api/v1/admin/products/${productId}/images`, {
+    const res = await fetch(`/api/v1/admin/products/${productId}/images`, {
       method: 'POST',
       credentials: 'include',
       body: formData,
@@ -53,7 +55,7 @@ export default function ProductImagesPanel({ productId, images: initialImages }:
   async function handleDelete(imageId: number) {
     if (!confirm('Delete this image?')) return;
 
-    const res = await fetch(`${API_URL}/api/v1/admin/products/${productId}/images/${imageId}`, {
+    const res = await fetch(`/api/v1/admin/products/${productId}/images/${imageId}`, {
       method: 'DELETE',
       credentials: 'include',
     });
@@ -90,7 +92,7 @@ export default function ProductImagesPanel({ productId, images: initialImages }:
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {images.map(img => {
-            const imgUrl = `${API_URL}${img.path}`;
+            const imgUrl = img.path;
             return (
               <div key={img.id} className="relative group rounded-lg overflow-hidden border bg-gray-50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

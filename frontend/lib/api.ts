@@ -1,13 +1,14 @@
-const API_URL =
-  process.env.API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  'http://localhost:5000';
+const SERVER_BASE = process.env.API_URL ?? 'http://localhost:5000';
+
+function apiBase() {
+  return typeof window === 'undefined' ? `${SERVER_BASE}/api/v1` : '/api/v1';
+}
 
 export async function apiFetch<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
-  const res = await fetch(`${API_URL}/api/v1${path}`, {
+  const res = await fetch(`${apiBase()}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
