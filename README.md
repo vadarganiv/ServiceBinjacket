@@ -6,6 +6,14 @@ Albanian-first интернет-магазин электроники + серв
 - **Backend:** ASP.NET Core Web API · EF Core · PostgreSQL
 - **Infra:** Docker Compose · Nginx · Let's Encrypt
 
+Live: [91.239.6.20](http://91.239.6.20/en/) (HTTP, VPS by IP — domain pending)
+
+## Screenshots
+
+| Storefront | Admin — orders | Admin — order detail |
+|---|---|---|
+| ![Product catalog](docs/screenshots/products.jpg) | ![Admin orders list](docs/screenshots/admin-orders.jpg) | ![Admin order detail](docs/screenshots/admin-order-detail.jpg) |
+
 ---
 
 ## Локальный запуск
