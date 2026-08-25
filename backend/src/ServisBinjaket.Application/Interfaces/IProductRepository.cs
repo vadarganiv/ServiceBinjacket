@@ -17,7 +17,7 @@ public interface IProductRepository
     Task UpdateAsync(Product product, CancellationToken ct = default);
     Task<bool> SetPublishedAsync(int id, bool isPublished, CancellationToken ct = default);
     Task<ProductImage> AddImageAsync(ProductImage image, CancellationToken ct = default);
-    Task<bool> DeleteImageAsync(int imageId, CancellationToken ct = default);
+    Task<string?> DeleteImageAsync(int productId, int imageId, CancellationToken ct = default);
     Task<bool> SlugExistsAsync(string slugSq, string? slugEn, int? excludeId, CancellationToken ct = default);
     Task<IReadOnlyList<ProductCategory>> GetAllCategoriesAsync(CancellationToken ct = default);
     Task<int> CountAsync(CancellationToken ct = default);

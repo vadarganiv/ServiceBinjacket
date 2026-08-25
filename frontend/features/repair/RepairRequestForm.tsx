@@ -17,8 +17,13 @@ interface FormErrors {
   deviceType?: string;
   problemDescription?: string;
   consent?: string;
+  files?: string;
   server?: string;
 }
+
+const MAX_FILES = 4;
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 30 * 1024 * 1024;
 
 export default function RepairRequestForm({ locale, services }: Props) {
   const t = useTranslations('repairRequest');
@@ -27,6 +32,7 @@ export default function RepairRequestForm({ locale, services }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [successId, setSuccessId] = useState<number | null>(null);
+  const [successWarning, setSuccessWarning] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,6 +65,14 @@ export default function RepairRequestForm({ locale, services }: Props) {
     if (!form.deviceType.trim()) errs.deviceType = t('errorRequired');
     if (!form.problemDescription.trim()) errs.problemDescription = t('errorRequired');
     if (!form.consent) errs.consent = t('errorConsent');
+
+    const files = selectedFiles ? Array.from(selectedFiles) : [];
+    if (files.length > MAX_FILES) errs.files = t('errorFilesCount');
+    else if (files.some(file => file.size > MAX_FILE_BYTES)) errs.files = t('errorFileSize');
+    else if (files.reduce((total, file) => total + file.size, 0) > MAX_TOTAL_BYTES) {
+      errs.files = t('errorFilesTotalSize');
+    }
+
     return errs;
   }
 
@@ -107,17 +121,26 @@ export default function RepairRequestForm({ locale, services }: Props) {
       const created: RepairRequestResponse = await res.json();
 
       if (selectedFiles && selectedFiles.length > 0) {
-        const fd = new FormData();
-        Array.from(selectedFiles).forEach(f => fd.append('files', f));
-        await fetch(`/api/v1/repair-requests/${created.id}/files`, {
-          method: 'POST',
-          body: fd,
-        });
+        try {
+          const fd = new FormData();
+          Array.from(selectedFiles).forEach(f => fd.append('files', f));
+          const uploadResponse = await fetch(`/api/v1/repair-requests/${created.id}/files`, {
+            method: 'POST',
+            body: fd,
+          });
+
+          if (!uploadResponse.ok) {
+            const uploadError = await uploadResponse.json().catch(() => null);
+            setSuccessWarning(uploadError?.error?.message ?? t('errorUploadFailed'));
+          }
+        } catch {
+          setSuccessWarning(t('errorUploadFailed'));
+        }
       }
 
       setSuccessId(created.id);
     } catch {
-      setErrors({ server: 'Network error. Please try again.' });
+      setErrors({ server: t('errorNetwork') });
     } finally {
       setSubmitting(false);
     }
@@ -136,6 +159,11 @@ export default function RepairRequestForm({ locale, services }: Props) {
         <p className="text-sm font-medium text-primary mb-8">
           {tSuccess('repairRequestId').replace('{id}', String(successId))}
         </p>
+        {successWarning && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6">
+            {t('requestCreatedUploadWarning')} {successWarning}
+          </p>
+        )}
         <Link
           href={`/${locale}`}
           className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors"
@@ -330,7 +358,10 @@ export default function RepairRequestForm({ locale, services }: Props) {
             multiple
             accept="image/jpeg,image/png,image/webp,video/mp4,application/pdf"
             className="hidden"
-            onChange={e => setSelectedFiles(e.target.files)}
+            onChange={e => {
+              setSelectedFiles(e.target.files);
+              setErrors(previous => ({ ...previous, files: undefined, server: undefined }));
+            }}
           />
           <button
             type="button"
@@ -344,9 +375,10 @@ export default function RepairRequestForm({ locale, services }: Props) {
           </button>
           {selectedFiles && selectedFiles.length > 0 && (
             <p className="text-sm text-muted-foreground mt-2">
-              {selectedFiles.length} {selectedFiles.length === 1 ? 'skedar' : 'skedarë'} të zgjedhur
+              {t('filesSelected', { count: selectedFiles.length })}
             </p>
           )}
+          {errors.files && <p className={errorClass}>{errors.files}</p>}
         </div>
       </div>
 

@@ -5,7 +5,7 @@ import { routing } from './i18n/routing';
 const intlMiddleware = createMiddleware(routing);
 const SAFE_PAGE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
-export default function middleware(req: NextRequest) {
+export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (!SAFE_PAGE_METHODS.has(req.method)) {
@@ -16,7 +16,9 @@ export default function middleware(req: NextRequest) {
   }
 
   if (pathname.startsWith('/admin')) {
-    return NextResponse.next();
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-next-intl-locale', 'en');
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   return intlMiddleware(req);

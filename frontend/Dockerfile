@@ -13,6 +13,8 @@ COPY . .
 # API_URL is a build-time arg so Next.js can reference it server-side
 ARG API_URL=http://backend:5000
 ENV API_URL=$API_URL
+ARG PUBLIC_SITE_URL=http://localhost:3000
+ENV PUBLIC_SITE_URL=$PUBLIC_SITE_URL
 
 RUN mkdir -p /app/public && npm run build
 

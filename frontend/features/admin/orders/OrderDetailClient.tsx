@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import StatusBadge from '@/features/admin/components/StatusBadge';
 import { toWhatsAppNumber } from '@/features/admin/lib/api';
 
 const ORDER_STATUSES = [

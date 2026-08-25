@@ -1,77 +1,40 @@
-# Data Model
+# Data model
 
-## Сущности (MVP)
+## Main entities
 
-| Entity | Назначение | Ключевые поля |
+| Entity | Purpose | Important fields |
 |---|---|---|
-| `Customer` | покупатель / автор заявки | `Id`, `FullName`, `Phone`, `WhatsAppPhone?`, `Email?`, `City`, `Address?`, `CreatedAt` |
-| `ProductCategory` | категория товаров | `Id`, локализованные `Name*`/`Slug*`, `ParentId?`, `SortOrder`, `IsPublished` |
-| `Product` | товар | `Id`, локализованные `Name*`/`Slug*`/`ShortDescription*`/`Description*`, `Price`, `Currency`, `Condition` (enum), `StockQty?`, `CategoryId`, `WarrantyMonths?`, `IsPublished`, `CreatedAt` |
-| `ProductImage` | картинка товара | `Id`, `ProductId`, `Path`, `Alt*` локализованный, `SortOrder` |
-| `ServiceCategory` | категория услуг ремонта | `Id`, локализованные `Name*`/`Slug*`, `SortOrder`, `IsPublished` |
-| `Service` | услуга ремонта | `Id`, локализованные `Name*`/`Slug*`/`ShortDescription*`/`Description*`, `PriceNote*` локализованный, `CategoryId`, `IsPublished` |
-| `RepairRequest` | заявка на ремонт | `Id`, `CustomerId`, `ServiceId?`, `DeviceType`, `Brand?`, `Model?`, `ProblemDescription`, `PreferredDeliveryMethod` (enum), `CustomerComment?`, `Status` (enum), `AdminComment?`, `CreatedAt`, `UpdatedAt` |
-| `RepairRequestFile` | файл к заявке (фото/видео) | `Id`, `RepairRequestId`, `Path`, `OriginalName`, `MimeType`, `SizeBytes`, `UploadedAt` |
-| `Order` | заказ товара | `Id`, `CustomerId`, `DeliveryMethod` (enum), `PaymentMethod` (enum), `Status` (enum), `Subtotal`, `Currency`, `CustomerComment?`, `AdminComment?`, `CreatedAt`, `UpdatedAt` |
-| `OrderItem` | позиция в заказе | `Id`, `OrderId`, `ProductId`, `NameSnapshot`, `PriceSnapshot`, `Quantity` |
-| `Payment` | факт оплаты (заготовка) | `Id`, `OrderId?` или `RepairRequestId?`, `Method` (enum), `Status` (enum), `Amount`, `Currency`, `PaidAt?`, `Notes?` |
-| `AdminUser` | админ | `Id`, `Email`, `PasswordHash`, `DisplayName`, `IsActive`, `CreatedAt`, `LastLoginAt?`, `LastLogoutAt?` |
-
-`*` означает пару `*Sq` / `*En` (см. ниже).
-
-## Локализованные поля
-
-Для public-контента (ProductCategory, Product, ServiceCategory, Service, ProductImage.Alt):
-
-```
-NameSq            NameEn
-SlugSq            SlugEn
-ShortDescriptionSq  ShortDescriptionEn
-DescriptionSq     DescriptionEn
-PriceNoteSq       PriceNoteEn        (только для Service)
-AltSq             AltEn              (только для ProductImage)
-```
-
-### Fallback rule
-
-```
-locale=sq          => Sq поля
-locale=en          => En поля; если En пусто → Sq
-locale отсутствует => sq
-```
-
-Реализовать в Application слое в маппере DTO. **Не** реализовывать в контроллерах или EF query.
-
-### Slugs
-
-- Уникальны в рамках своей сущности.
-- Генерация: предпочтительно admin задаёт вручную; если пусто — auto из `Name` (lowercase, dashes, без диакритики). Для albanian-символов (`ç`, `ë`) — `c`, `e`.
-
-## Enums (C#)
-
-```csharp
-public enum ProductCondition  { New, Used, Refurbished, Unknown }
-public enum DeliveryMethod    { StorePickup, LocalCourier, PostalShipping, ManualAgreement }
-public enum PaymentMethod     { CashOnDelivery, CashInStore, BankCardOnline, BankTransfer }
-public enum PaymentStatus     { Pending, Paid, Failed, Cancelled, Refunded }
-public enum OrderStatus       { New, Confirmed, Preparing, OutForDelivery, SentByPost, Delivered, Completed, Cancelled }
-public enum RepairStatus      { New, Contacted, WaitingForDevice, Received, Diagnostics, PriceOffered, PriceAgreed, Repairing, Ready, SentBack, Completed, Cancelled }
-```
-
-В БД enums хранить как `int` (см. `HasConversion<int>()` в EF configuration) или как `string` — выбрать единообразно в первой миграции и зафиксировать в `DECISIONS.md`.
+| `Customer` | Buyer or repair requester | Contact and address details |
+| `ProductCategory` | Localized catalog category | Names, slugs, sort/publish state |
+| `Product` | Sellable item | Localized content, price, condition, stock, category, warranty |
+| `ProductImage` | Product media | Storage path, localized alt text, order |
+| `ServiceCategory` | Localized repair category | Names, slugs, sort/publish state |
+| `Service` | Repair service | Localized content, price note, category, publish state |
+| `RepairRequest` | Customer repair intake | Device/problem/delivery details, status, comments |
+| `RepairRequestFile` | Repair attachment metadata | Path, safe display name, trusted MIME, byte size |
+| `Order` | Cash order | Customer, delivery/payment/status, subtotal, comments |
+| `OrderItem` | Order line snapshot | Product, name/price snapshot, quantity |
+| `Payment` | Future payment record | Owner, method, status, amount, date |
+| `AdminUser` | Back-office identity | Email, BCrypt hash, active/login/logout timestamps |
 
 ## Relationships
 
-- `Product` N:1 `ProductCategory`; `Product` 1:N `ProductImage`.
-- `Service` N:1 `ServiceCategory`.
-- `Order` N:1 `Customer`; `Order` 1:N `OrderItem` → N:1 `Product`.
-- `RepairRequest` N:1 `Customer`; N:0..1 `Service`; 1:N `RepairRequestFile`.
-- `Payment` 0..1:1 `Order` или `RepairRequest` (один из двух).
+- Product category 1:N products; product 1:N images.
+- Service category 1:N services.
+- Customer 1:N orders and 1:N repair requests.
+- Order 1:N order items; each item references a product and preserves name/price snapshots.
+- Repair request N:0..1 service and 1:N attachment metadata.
+- A payment can belong to an order or repair request when that feature is implemented.
 
-## Migrations
+## Localized fields
 
-- Через EF Core migrations. Никакого ручного DDL.
-- Первая миграция — все таблицы + seed для категорий и базовых сервисов.
-- Все локализованные поля — `nvarchar` / `text`, nullable у En.
-- Currency по умолчанию `ALL`.
-- Audit поля (`CreatedAt`, `UpdatedAt`) — UTC, обновлять в `DbContext.SaveChangesAsync`.
+Public content uses paired Albanian/English columns such as `NameSq`/`NameEn`, `SlugSq`/`SlugEn`, and `DescriptionSq`/`DescriptionEn`. The API returns a locale-selected DTO rather than exposing both persistence fields. Missing English values fall back to Albanian.
+
+## Conventions
+
+- Enum properties use EF Core string conversion.
+- Currency defaults to Albanian lek (`ALL`).
+- Timestamps are UTC.
+- English localized fields can be nullable; Albanian primary content is required where configured.
+- Slugs are unique within their entity type.
+- Migrations are the authoritative schema history; avoid manual production DDL.

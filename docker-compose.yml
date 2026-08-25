@@ -34,6 +34,9 @@ services:
       ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:-change_me}
       UPLOADS_ROOT: ${UPLOADS_ROOT:-/app/uploads}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      MAX_UPLOAD_FILES: ${MAX_UPLOAD_FILES:-4}
+      MAX_UPLOAD_TOTAL_MB: ${MAX_UPLOAD_TOTAL_MB:-30}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       WHATSAPP_PHONE: ${WHATSAPP_PHONE:-+355000000000}
     volumes:
       - uploads_data:/app/uploads
@@ -50,9 +53,11 @@ services:
       dockerfile: Dockerfile
       args:
         API_URL: ${API_URL:-http://backend:5000}
+        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost:3000}
     restart: unless-stopped
     environment:
       API_URL: "http://backend:5000"
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost:3000}
       WHATSAPP_PHONE: ${WHATSAPP_PHONE:-}
       PUBLIC_ADDRESS: ${PUBLIC_ADDRESS:-}
       PUBLIC_PHONE: ${PUBLIC_PHONE:-}

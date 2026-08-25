@@ -23,17 +23,15 @@ export default async function LocaleLayout({ children, params }: Props) {
   const whatsappPhone = process.env.WHATSAPP_PHONE ?? '';
 
   return (
-    <html lang={locale}>
-      <body>
-        <NextIntlClientProvider messages={messages}>
-          <CartProvider>
-            <Header />
-            <main className="min-h-screen">{children}</main>
-            <Footer locale={locale} />
-            <WhatsAppFab phone={whatsappPhone} locale={locale} />
-          </CartProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <div lang={locale}>
+      <NextIntlClientProvider messages={messages}>
+        <CartProvider>
+          <Header />
+          <main className="min-h-screen">{children}</main>
+          <Footer locale={locale} />
+          <WhatsAppFab phone={whatsappPhone} locale={locale} />
+        </CartProvider>
+      </NextIntlClientProvider>
+    </div>
   );
 }

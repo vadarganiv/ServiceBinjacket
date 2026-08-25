@@ -47,10 +47,10 @@ public class ProductRepository : IProductRepository
 
         q = query.Sort switch
         {
-            "price-asc"  => q.OrderBy(p => p.Price),
+            "price-asc" => q.OrderBy(p => p.Price),
             "price-desc" => q.OrderByDescending(p => p.Price),
-            "name-asc"   => q.OrderBy(p => p.NameSq),
-            _            => q.OrderByDescending(p => p.CreatedAt)
+            "name-asc" => q.OrderBy(p => p.NameSq),
+            _ => q.OrderByDescending(p => p.CreatedAt)
         };
 
         var total = await q.CountAsync(ct);
@@ -163,13 +163,17 @@ public class ProductRepository : IProductRepository
         return image;
     }
 
-    public async Task<bool> DeleteImageAsync(int imageId, CancellationToken ct = default)
+    public async Task<string?> DeleteImageAsync(int productId, int imageId, CancellationToken ct = default)
     {
-        var image = await _db.ProductImages.FindAsync([imageId], ct);
-        if (image is null) return false;
+        var image = await _db.ProductImages.SingleOrDefaultAsync(
+            candidate => candidate.Id == imageId && candidate.ProductId == productId,
+            ct);
+        if (image is null) return null;
+
+        var storedPath = image.Path;
         _db.ProductImages.Remove(image);
         await _db.SaveChangesAsync(ct);
-        return true;
+        return storedPath;
     }
 
     public async Task<bool> SlugExistsAsync(string slugSq, string? slugEn, int? excludeId, CancellationToken ct = default)
