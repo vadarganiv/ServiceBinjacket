@@ -165,7 +165,10 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.UseRateLimiter();
 
-var uploadsRoot = app.Configuration["UPLOADS_ROOT"] ?? "/app/uploads";
+var uploadsRoot = app.Configuration["UPLOADS_ROOT"];
+if (string.IsNullOrWhiteSpace(uploadsRoot))
+    uploadsRoot = Path.Combine(app.Environment.ContentRootPath, "uploads");
+uploadsRoot = Path.GetFullPath(uploadsRoot);
 if (!Directory.Exists(uploadsRoot))
     Directory.CreateDirectory(uploadsRoot);
 app.UseStaticFiles(new StaticFileOptions

@@ -22,6 +22,7 @@ public class AdminProductsController : ControllerBase
     private readonly IValidator<ProductCreateDto> _createValidator;
     private readonly IValidator<ProductUpdateDto> _updateValidator;
     private readonly IConfiguration _config;
+    private readonly IWebHostEnvironment _environment;
     private readonly ILogger<AdminProductsController> _logger;
 
     public AdminProductsController(
@@ -31,6 +32,7 @@ public class AdminProductsController : ControllerBase
         IValidator<ProductCreateDto> createValidator,
         IValidator<ProductUpdateDto> updateValidator,
         IConfiguration config,
+        IWebHostEnvironment environment,
         ILogger<AdminProductsController> logger)
     {
         _repo = repo;
@@ -39,6 +41,7 @@ public class AdminProductsController : ControllerBase
         _createValidator = createValidator;
         _updateValidator = updateValidator;
         _config = config;
+        _environment = environment;
         _logger = logger;
     }
 
@@ -174,7 +177,7 @@ public class AdminProductsController : ControllerBase
             validatedFiles.Add((file, validation.Upload!));
         }
 
-        var uploadsRoot = Path.GetFullPath(_config["UPLOADS_ROOT"] ?? "/app/uploads");
+        var uploadsRoot = GetUploadsRoot();
         var productDir = Path.Combine(uploadsRoot, "products", id.ToString(System.Globalization.CultureInfo.InvariantCulture));
         Directory.CreateDirectory(productDir);
 
@@ -228,7 +231,7 @@ public class AdminProductsController : ControllerBase
         if (storedPath is null)
             return NotFound(new { error = new { code = "NOT_FOUND", message = "Image not found" } });
 
-        var uploadsRoot = Path.GetFullPath(_config["UPLOADS_ROOT"] ?? "/app/uploads");
+        var uploadsRoot = GetUploadsRoot();
         var productDirectory = Path.GetFullPath(Path.Combine(
             uploadsRoot,
             "products",
@@ -263,5 +266,13 @@ public class AdminProductsController : ControllerBase
         {
             _logger.LogWarning(exception, "Failed to remove incomplete upload at {Path}", path);
         }
+    }
+
+    private string GetUploadsRoot()
+    {
+        var configuredRoot = _config["UPLOADS_ROOT"];
+        return Path.GetFullPath(string.IsNullOrWhiteSpace(configuredRoot)
+            ? Path.Combine(_environment.ContentRootPath, "uploads")
+            : configuredRoot);
     }
 }
