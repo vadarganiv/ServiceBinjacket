@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface ProductImage {
@@ -17,14 +17,10 @@ interface Props {
 
 export default function ProductImagesPanel({ productId, images: initialImages }: Props) {
   const router = useRouter();
-  const [images, setImages] = useState(initialImages);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setImages(initialImages);
-  }, [initialImages]);
+  const images = initialImages;
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -35,35 +31,43 @@ export default function ProductImagesPanel({ productId, images: initialImages }:
     const formData = new FormData();
     for (const f of files) formData.append('files', f);
 
-    const res = await fetch(`/api/v1/admin/products/${productId}/images`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
+    try {
+      const res = await fetch(`/api/v1/admin/products/${productId}/images`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
 
-    setUploading(false);
-    if (res.ok) {
-      router.refresh();
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setError(data?.error?.message ?? 'Upload failed');
+      if (res.ok) {
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data?.error?.message ?? 'Upload failed');
+      }
+    } catch {
+      setError('Network error — upload failed');
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
     }
-
-    if (fileRef.current) fileRef.current.value = '';
   }
 
   async function handleDelete(imageId: number) {
     if (!confirm('Delete this image?')) return;
 
-    const res = await fetch(`/api/v1/admin/products/${productId}/images/${imageId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
+    try {
+      const res = await fetch(`/api/v1/admin/products/${productId}/images/${imageId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
 
-    if (res.ok) {
-      setImages(prev => prev.filter(i => i.id !== imageId));
-    } else {
-      setError('Delete failed');
+      if (res.ok) {
+        router.refresh();
+      } else {
+        setError('Delete failed');
+      }
+    } catch {
+      setError('Network error — delete failed');
     }
   }
 
@@ -104,6 +108,7 @@ export default function ProductImagesPanel({ productId, images: initialImages }:
                 <button
                   onClick={() => handleDelete(img.id)}
                   className="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                  aria-label={`Delete image ${img.altSq}`}
                 >
                   ×
                 </button>

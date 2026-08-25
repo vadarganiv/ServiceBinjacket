@@ -8,8 +8,10 @@ public static class SlugHelper
 {
     private static readonly Dictionary<char, string> AlbanianMap = new()
     {
-        ['ë'] = "e", ['Ë'] = "e",
-        ['ç'] = "c", ['Ç'] = "c",
+        ['ë'] = "e",
+        ['Ë'] = "e",
+        ['ç'] = "c",
+        ['Ç'] = "c",
     };
 
     public static string Generate(string input)

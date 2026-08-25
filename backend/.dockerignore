@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/TestResults/
+**/uploads/
+**/*.user
+**/*.suo
+**/*.lscache
+.vs/
+.idea/
+*.log
+*.trx
+*.coverage
+*.coveragexml

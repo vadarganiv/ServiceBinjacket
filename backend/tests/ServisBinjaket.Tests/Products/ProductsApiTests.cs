@@ -37,15 +37,21 @@ public class ProductsUseCaseTests : IDisposable
     {
         var phones = new ProductCategory
         {
-            NameSq = "Telefonë", NameEn = "Phones",
-            SlugSq = "telefone", SlugEn = "phones",
-            SortOrder = 1, IsPublished = true
+            NameSq = "Telefonë",
+            NameEn = "Phones",
+            SlugSq = "telefone",
+            SlugEn = "phones",
+            SortOrder = 1,
+            IsPublished = true
         };
         var laptops = new ProductCategory
         {
-            NameSq = "Laptop", NameEn = "Laptops",
-            SlugSq = "laptop", SlugEn = "laptops",
-            SortOrder = 2, IsPublished = true
+            NameSq = "Laptop",
+            NameEn = "Laptops",
+            SlugSq = "laptop",
+            SlugEn = "laptops",
+            SortOrder = 2,
+            IsPublished = true
         };
         _db.ProductCategories.AddRange(phones, laptops);
         _db.SaveChanges();
@@ -63,12 +69,14 @@ public class ProductsUseCaseTests : IDisposable
                 ShortDescriptionEn = "Great phone",
                 DescriptionSq = "Përshkrim i plotë",
                 DescriptionEn = "Full description",
-                Price = 45000, Currency = "ALL",
+                Price = 45000,
+                Currency = "ALL",
                 Condition = ProductCondition.Used,
                 StockQty = 5,
                 CategoryId = phones.Id,
                 IsPublished = true,
-                CreatedAt = now, UpdatedAt = now
+                CreatedAt = now,
+                UpdatedAt = now
             },
             new Product
             {
@@ -80,12 +88,14 @@ public class ProductsUseCaseTests : IDisposable
                 ShortDescriptionEn = null,
                 DescriptionSq = "Përshkrim Samsung",
                 DescriptionEn = null,
-                Price = 30000, Currency = "ALL",
+                Price = 30000,
+                Currency = "ALL",
                 Condition = ProductCondition.New,
                 StockQty = 0,
                 CategoryId = phones.Id,
                 IsPublished = true,
-                CreatedAt = now.AddMinutes(-10), UpdatedAt = now.AddMinutes(-10)
+                CreatedAt = now.AddMinutes(-10),
+                UpdatedAt = now.AddMinutes(-10)
             },
             new Product
             {
@@ -97,12 +107,14 @@ public class ProductsUseCaseTests : IDisposable
                 ShortDescriptionEn = "Powerful laptop",
                 DescriptionSq = "Përshkrim MacBook",
                 DescriptionEn = "MacBook description",
-                Price = 150000, Currency = "ALL",
+                Price = 150000,
+                Currency = "ALL",
                 Condition = ProductCondition.Refurbished,
                 StockQty = null,
                 CategoryId = laptops.Id,
                 IsPublished = true,
-                CreatedAt = now.AddMinutes(-20), UpdatedAt = now.AddMinutes(-20)
+                CreatedAt = now.AddMinutes(-20),
+                UpdatedAt = now.AddMinutes(-20)
             },
             new Product
             {
@@ -110,11 +122,13 @@ public class ProductsUseCaseTests : IDisposable
                 SlugSq = "draft-produkt",
                 ShortDescriptionSq = "",
                 DescriptionSq = "",
-                Price = 1000, Currency = "ALL",
+                Price = 1000,
+                Currency = "ALL",
                 Condition = ProductCondition.New,
                 CategoryId = phones.Id,
                 IsPublished = false,
-                CreatedAt = now, UpdatedAt = now
+                CreatedAt = now,
+                UpdatedAt = now
             }
         );
         _db.SaveChanges();

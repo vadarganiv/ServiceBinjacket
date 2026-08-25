@@ -9,8 +9,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using ServisBinjaket.Api.Configuration;
 using ServisBinjaket.Application.Interfaces;
 using ServisBinjaket.Infrastructure;
+using ServisBinjaket.Infrastructure.Auth;
 using ServisBinjaket.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,7 +31,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.Configure<ForwardedHeadersOptions>(opt =>
 {
     opt.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    opt.KnownNetworks.Clear();
+    opt.KnownIPNetworks.Clear();
     opt.KnownProxies.Clear();
 });
 
@@ -37,22 +39,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-const string PlaceholderJwtSecret = "change_me_long_random_secret_at_least_32_bytes";
-var jwtSecret = builder.Configuration["JWT_SECRET"] ?? "";
-
 if (builder.Environment.IsProduction())
 {
-    if (string.IsNullOrEmpty(jwtSecret) || jwtSecret == PlaceholderJwtSecret || Encoding.UTF8.GetByteCount(jwtSecret) < 32)
-    {
-        throw new InvalidOperationException(
-            "JWT_SECRET is not configured for Production. Set it to a strong random value of at least 32 bytes " +
-            "(e.g. `openssl rand -base64 48`) and restart. Placeholder value is rejected.");
-    }
+    StartupConfigurationValidator.ValidateProduction(builder.Configuration);
 }
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        var jwtSecret = builder.Configuration["JWT_SECRET"] ?? "";
         var keyBytes = Encoding.UTF8.GetByteCount(jwtSecret) >= 32
             ? Encoding.UTF8.GetBytes(jwtSecret)
             : new byte[32]; // invalid key — any real request will fail validation
@@ -83,7 +78,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     return;
                 }
 
-                var issuedAt = ctx.SecurityToken.ValidFrom;
+                var issuedAtTicksClaim = ctx.Principal?.FindFirst(JwtService.IssuedAtTicksClaim)?.Value;
+                if (!long.TryParse(issuedAtTicksClaim, out var issuedAtTicks) ||
+                    issuedAtTicks < DateTime.MinValue.Ticks ||
+                    issuedAtTicks > DateTime.MaxValue.Ticks)
+                {
+                    ctx.Fail("Invalid token issue timestamp");
+                    return;
+                }
+
+                var issuedAt = new DateTime(issuedAtTicks, DateTimeKind.Utc);
                 var repo = ctx.HttpContext.RequestServices.GetRequiredService<IAdminUserRepository>();
                 var admin = await repo.GetByIdAsync(adminId);
 
@@ -112,12 +116,23 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
+    options.AddPolicy("repair-upload", ctx =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(10),
+                SegmentsPerWindow = 10,
+                QueueLimit = 0
+            }));
+
     options.RejectionStatusCode = 429;
     options.OnRejected = async (ctx, token) =>
     {
         ctx.HttpContext.Response.Headers.RetryAfter = "600";
         await ctx.HttpContext.Response.WriteAsJsonAsync(
-            new { error = new { code = "RATE_LIMITED", message = "Too many login attempts. Try again later." } },
+            new { error = new { code = "RATE_LIMITED", message = "Too many requests. Try again later." } },
             token);
     };
 });
@@ -150,7 +165,10 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.UseRateLimiter();
 
-var uploadsRoot = app.Configuration["UPLOADS_ROOT"] ?? "/app/uploads";
+var uploadsRoot = app.Configuration["UPLOADS_ROOT"];
+if (string.IsNullOrWhiteSpace(uploadsRoot))
+    uploadsRoot = Path.Combine(app.Environment.ContentRootPath, "uploads");
+uploadsRoot = Path.GetFullPath(uploadsRoot);
 if (!Directory.Exists(uploadsRoot))
     Directory.CreateDirectory(uploadsRoot);
 app.UseStaticFiles(new StaticFileOptions
@@ -175,6 +193,13 @@ static async Task SeedAdminAsync(IServiceProvider services)
     var email = services.GetRequiredService<IConfiguration>()["ADMIN_DEFAULT_EMAIL"];
     var password = services.GetRequiredService<IConfiguration>()["ADMIN_DEFAULT_PASSWORD"];
     var logger = services.GetRequiredService<ILogger<Program>>();
+    var environment = services.GetRequiredService<IWebHostEnvironment>();
+
+    if (environment.IsProduction())
+    {
+        StartupConfigurationValidator.ValidateAdminBootstrap(
+            services.GetRequiredService<IConfiguration>());
+    }
 
     if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
     {
@@ -182,14 +207,12 @@ static async Task SeedAdminAsync(IServiceProvider services)
         return;
     }
 
-    const string PlaceholderPassword = "change_me";
-    if (password == PlaceholderPassword)
+    if (password == StartupConfigurationValidator.PlaceholderAdminPassword)
     {
         logger.LogWarning(
             "ADMIN_DEFAULT_PASSWORD is set to the placeholder value '{Placeholder}'. " +
-            "Change it immediately after first login by updating the admin_users table directly. " +
-            "See docs/DEPLOYMENT.md for the procedure.",
-            PlaceholderPassword);
+            "This is allowed only outside Production.",
+            StartupConfigurationValidator.PlaceholderAdminPassword);
     }
 
     var hasher = services.GetRequiredService<IPasswordHasher>();

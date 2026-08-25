@@ -35,8 +35,10 @@ services:
       ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD}
       UPLOADS_ROOT: ${UPLOADS_ROOT:-/app/uploads}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      MAX_UPLOAD_FILES: ${MAX_UPLOAD_FILES:-4}
+      MAX_UPLOAD_TOTAL_MB: ${MAX_UPLOAD_TOTAL_MB:-30}
+      CORS_ORIGINS: ${CORS_ORIGINS}
       WHATSAPP_PHONE: ${WHATSAPP_PHONE}
-      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
     volumes:
       - uploads_data:/app/uploads
     tmpfs:
@@ -72,11 +74,13 @@ services:
       dockerfile: Dockerfile
       args:
         API_URL: ${API_URL:-http://backend:5000}
+        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
     container_name: servis-binjaket-frontend
     restart: unless-stopped
     environment:
       API_URL: "http://backend:5000"
       NODE_ENV: production
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
       WHATSAPP_PHONE: ${WHATSAPP_PHONE}
       PUBLIC_ADDRESS: ${PUBLIC_ADDRESS:-}
       PUBLIC_PHONE: ${PUBLIC_PHONE:-}

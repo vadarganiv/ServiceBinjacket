@@ -214,8 +214,9 @@
     "deliveryPostalShipping": "Shërbimi postar",
     "deliveryManualAgreement": "Me marrëveshje",
     "filesSection": "Bashkëngjit foto/video (opsional)",
-    "filesHint": "Foto ose video të pajisjes (maks. 25 MB për skedar). Formatet: JPG, PNG, WebP, MP4, PDF",
+    "filesHint": "Deri në 4 skedarë, 25 MB secili dhe 30 MB gjithsej. Formatet: JPG, PNG, WebP, MP4, PDF",
     "filesSelect": "Zgjidhni skedarë",
+    "filesSelected": "{count, plural, one {# skedar i zgjedhur} other {# skedarë të zgjedhur}}",
     "comment": "Koment shtesë (opsional)",
     "commentPlaceholder": "Çdo informacion tjetër që dëshironi të ndani me ne",
     "consent": "Pranoj kushtet e shërbimit dhe përpunimin e të dhënave personale",
@@ -224,7 +225,13 @@
     "uploadingFiles": "Duke ngarkuar skedarët...",
     "errorRequired": "Kjo fushë është e detyrueshme",
     "errorPhone": "Numri i telefonit është i pavlefshëm",
-    "errorConsent": "Duhet të pranoni kushtet"
+    "errorConsent": "Duhet të pranoni kushtet",
+    "errorFilesCount": "Zgjidhni jo më shumë se 4 skedarë",
+    "errorFileSize": "Çdo skedar duhet të jetë 25 MB ose më i vogël",
+    "errorFilesTotalSize": "Skedarët e zgjedhur duhet të jenë gjithsej 30 MB ose më pak",
+    "errorUploadFailed": "Bashkëngjitjet nuk mund të ngarkoheshin.",
+    "errorNetwork": "Gabim rrjeti. Ju lutemi provoni përsëri.",
+    "requestCreatedUploadWarning": "Kërkesa juaj për riparim u krijua, por:"
   },
   "cart": {
     "title": "Shporta",

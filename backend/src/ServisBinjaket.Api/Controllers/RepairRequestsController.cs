@@ -1,5 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using ServisBinjaket.Api.Uploads;
 using ServisBinjaket.Application.Interfaces;
 using ServisBinjaket.Application.RepairRequests.DTOs;
 using ServisBinjaket.Application.RepairRequests.UseCases;
@@ -11,10 +13,7 @@ namespace ServisBinjaket.Api.Controllers;
 [Route("api/v1/repair-requests")]
 public class RepairRequestsController : ControllerBase
 {
-    private static readonly HashSet<string> AllowedMimeTypes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "image/jpeg", "image/png", "image/webp", "video/mp4", "application/pdf"
-    };
+    private const long MaxTransportBytes = 32L * 1024 * 1024;
 
     private readonly CreateRepairRequestUseCase _create;
     private readonly IRepairRequestRepository _repository;
@@ -62,67 +61,159 @@ public class RepairRequestsController : ControllerBase
     /// <summary>Upload files to an existing repair request (multipart/form-data).</summary>
     [HttpPost("{id:int}/files")]
     [Consumes("multipart/form-data")]
-    [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]
-    [DisableRequestSizeLimit]
-    public async Task<IActionResult> UploadFiles(int id, IFormFileCollection files, CancellationToken ct)
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxTransportBytes)]
+    [RequestSizeLimit(MaxTransportBytes)]
+    [EnableRateLimiting("repair-upload")]
+    public async Task<IActionResult> UploadFiles(
+        int id,
+        [FromForm] IFormFileCollection files,
+        CancellationToken ct)
     {
         var request = await _repository.GetByIdAsync(id, ct);
         if (request is null)
             return NotFound(new { error = new { code = "NOT_FOUND", message = "Repair request not found" } });
 
-        if (!files.Any())
+        var candidates = files.Where(file => file.Length > 0).ToList();
+        if (candidates.Count == 0)
             return BadRequest(new { error = new { code = "VALIDATION_ERROR", message = "No files provided" } });
 
-        var uploadsRoot = _config["UPLOADS_ROOT"] ?? "/app/uploads";
-        if (!int.TryParse(_config["MAX_UPLOAD_MB"], out var maxMb)) maxMb = 25;
-        var maxBytes = (long)maxMb * 1024 * 1024;
+        var maxFileMb = ReadBoundedInt("MAX_UPLOAD_MB", defaultValue: 25, minimum: 1, maximum: 25);
+        var maxFiles = ReadBoundedInt("MAX_UPLOAD_FILES", defaultValue: 4, minimum: 1, maximum: 10);
+        var maxTotalMb = ReadBoundedInt("MAX_UPLOAD_TOTAL_MB", defaultValue: 30, minimum: 1, maximum: 30);
+        var maxFileBytes = (long)maxFileMb * 1024 * 1024;
+        var maxTotalBytes = (long)maxTotalMb * 1024 * 1024;
 
-        var repairDir = Path.Combine(uploadsRoot, "repairs", id.ToString());
+        if (candidates.Count > maxFiles)
+        {
+            return BadRequest(new
+            {
+                error = new
+                {
+                    code = "TOO_MANY_FILES",
+                    message = $"A maximum of {maxFiles} files can be uploaded at once"
+                }
+            });
+        }
+
+        long totalBytes = 0;
+        var validatedFiles = new List<(IFormFile File, ValidatedUpload Metadata)>();
+
+        foreach (var file in candidates)
+        {
+            if (file.Length > maxFileBytes)
+            {
+                _logger.LogWarning("Upload rejected: file too large ({Size} bytes) for repair {Id}", file.Length, id);
+                return StatusCode(413, new
+                {
+                    error = new
+                    {
+                        code = "FILE_TOO_LARGE",
+                        message = $"A file exceeds the {maxFileMb} MB per-file limit"
+                    }
+                });
+            }
+
+            if (totalBytes > maxTotalBytes - file.Length)
+            {
+                _logger.LogWarning("Upload rejected: total size limit exceeded for repair {Id}", id);
+                return StatusCode(413, new
+                {
+                    error = new
+                    {
+                        code = "UPLOAD_TOO_LARGE",
+                        message = $"Combined files exceed the {maxTotalMb} MB request limit"
+                    }
+                });
+            }
+
+            totalBytes += file.Length;
+
+            var validation = await UploadFileValidator.ValidateAsync(
+                file,
+                UploadFileScope.RepairAttachment,
+                ct);
+            if (!validation.IsValid)
+            {
+                _logger.LogWarning(
+                    "Upload rejected: {Code} for repair {Id}",
+                    validation.ErrorCode,
+                    id);
+                return BadRequest(new
+                {
+                    error = new
+                    {
+                        code = validation.ErrorCode,
+                        message = validation.ErrorMessage
+                    }
+                });
+            }
+
+            validatedFiles.Add((file, validation.Upload!));
+        }
+
+        var uploadsRoot = Path.GetFullPath(_config["UPLOADS_ROOT"] ?? "/app/uploads");
+        var repairDir = Path.Combine(uploadsRoot, "repairs", id.ToString(System.Globalization.CultureInfo.InvariantCulture));
         Directory.CreateDirectory(repairDir);
 
         var saved = new List<object>();
-
-        foreach (var file in files)
+        foreach (var (file, metadata) in validatedFiles)
         {
-            if (file.Length == 0) continue;
-
-            if (file.Length > maxBytes)
-            {
-                _logger.LogWarning("Upload rejected: file too large ({Size} bytes) for repair {Id}", file.Length, id);
-                return StatusCode(413, new { error = new { code = "FILE_TOO_LARGE", message = $"File exceeds {maxMb} MB limit" } });
-            }
-
-            var mimeType = file.ContentType;
-            if (!AllowedMimeTypes.Contains(mimeType))
-            {
-                _logger.LogWarning("Upload rejected: disallowed mime type '{Mime}' for repair {Id}", mimeType, id);
-                return BadRequest(new { error = new { code = "INVALID_FILE_TYPE", message = $"File type '{mimeType}' is not allowed" } });
-            }
-
-            var ext = Path.GetExtension(file.FileName);
-            var guidName = $"{Guid.NewGuid()}{ext}";
-            var destPath = Path.GetFullPath(Path.Combine(repairDir, guidName));
-
-            if (!destPath.StartsWith(Path.GetFullPath(uploadsRoot), StringComparison.OrdinalIgnoreCase))
-                return BadRequest(new { error = new { code = "INVALID_PATH", message = "Invalid file path" } });
-
-            await using var stream = System.IO.File.Create(destPath);
-            await file.CopyToAsync(stream, ct);
+            var guidName = $"{Guid.NewGuid():N}{metadata.StorageExtension}";
+            var destPath = Path.Combine(repairDir, guidName);
 
             var relativePath = $"/uploads/repairs/{id}/{guidName}";
             var repairFile = new RepairRequestFile
             {
                 RepairRequestId = id,
                 Path = relativePath,
-                OriginalName = file.FileName,
-                MimeType = mimeType,
+                OriginalName = metadata.OriginalFileName,
+                MimeType = metadata.ContentType,
                 SizeBytes = file.Length
             };
 
-            await _repository.AddFileAsync(repairFile, ct);
-            saved.Add(new { path = relativePath, originalName = file.FileName });
+            try
+            {
+                await using (var stream = new FileStream(
+                                 destPath,
+                                 FileMode.CreateNew,
+                                 FileAccess.Write,
+                                 FileShare.None,
+                                 bufferSize: 81920,
+                                 FileOptions.Asynchronous))
+                {
+                    await file.CopyToAsync(stream, ct);
+                }
+
+                await _repository.AddFileAsync(repairFile, ct);
+            }
+            catch
+            {
+                TryDeleteFile(destPath);
+                throw;
+            }
+
+            saved.Add(new { path = relativePath, originalName = metadata.OriginalFileName });
         }
 
         return Ok(new { uploaded = saved });
+    }
+
+    private int ReadBoundedInt(string key, int defaultValue, int minimum, int maximum)
+    {
+        return int.TryParse(_config[key], out var parsed)
+            ? Math.Clamp(parsed, minimum, maximum)
+            : defaultValue;
+    }
+
+    private void TryDeleteFile(string path)
+    {
+        try
+        {
+            System.IO.File.Delete(path);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Failed to remove incomplete upload at {Path}", path);
+        }
     }
 }

@@ -95,8 +95,8 @@ public class AdminServicesController : ControllerBase
         return error switch
         {
             "not_found" => NotFound(new { error = new { code = "NOT_FOUND", message = "Service not found" } }),
-            "slug"      => Conflict(new { error = new { code = "CONFLICT", message = "A service with this slug already exists" } }),
-            _           => Ok(result)
+            "slug" => Conflict(new { error = new { code = "CONFLICT", message = "A service with this slug already exists" } }),
+            _ => Ok(result)
         };
     }
 

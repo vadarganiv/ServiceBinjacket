@@ -1,71 +1,67 @@
 # API
 
-Base: `/api/v1`. Все localized GET'ы принимают `?locale=sq|en` (default `sq`, fallback `en→sq`).
+Base path: `/api/v1`. Localized public reads accept `?locale=sq|en`; `sq` is the default and missing English content falls back to Albanian.
 
-## Public
+## Public endpoints
 
-| Method | Path | Описание |
+| Method | Path | Purpose |
 |---|---|---|
-| GET | `/health` | health check, без auth |
-| GET | `/product-categories?locale=` | список категорий |
-| GET | `/products?locale=&categoryId=&q=&minPrice=&maxPrice=&condition=&inStock=&sort=&page=&pageSize=` | список товаров с фильтрацией |
-| GET | `/products/{slug}?locale=` | детали товара |
-| GET | `/service-categories?locale=` | список категорий услуг |
-| GET | `/services?locale=&categoryId=` | список услуг |
-| GET | `/services/{slug}?locale=` | детали услуги |
-| POST | `/orders` | создать заказ (cash-only) |
-| POST | `/repair-requests` | создать заявку на ремонт |
-| POST | `/repair-requests/{id}/files` | загрузить файлы к заявке (multipart) |
+| GET | `/health` | Service health |
+| GET | `/product-categories?locale=` | Published product categories |
+| GET | `/products?...` | Filtered, sorted, paginated catalog |
+| GET | `/products/{slug}?locale=` | Product detail |
+| GET | `/service-categories?locale=` | Published service categories |
+| GET | `/services?locale=&categoryId=` | Published services |
+| GET | `/services/{slug}?locale=` | Service detail |
+| POST | `/orders` | Create a cash order |
+| POST | `/repair-requests` | Create a repair request |
+| POST | `/repair-requests/{id}/files` | Attach repair files as multipart form data |
 
-## Auth (admin)
+Repair uploads accept at most four files, 25 MB per file and 30 MB combined by default. Allowed types are JPEG, PNG, WebP, MP4, and PDF. Extension, MIME, and file signature must agree. Limits can be lowered through configuration but cannot exceed the transport safety caps.
 
-| Method | Path | Описание |
+## Authentication
+
+| Method | Path | Purpose |
 |---|---|---|
-| POST | `/auth/login` | `{email, password}` → cookie/token |
-| POST | `/auth/logout` | invalidate session |
-| GET | `/auth/me` | текущий admin |
+| POST | `/auth/login` | Validate credentials and set the HttpOnly auth cookie |
+| POST | `/auth/logout` | Invalidate the current token and delete the cookie |
+| GET | `/auth/me` | Return the authenticated administrator |
 
-## Admin — products
+## Administrator endpoints
 
-```
-GET    /admin/products                              ?q=&isPublished=&page=&pageSize=
-POST   /admin/products                              create
+All routes below require the administrator cookie.
+
+```text
+GET    /admin/products
+POST   /admin/products
 GET    /admin/products/{id}
-PUT    /admin/products/{id}                          update (включая localized fields)
+PUT    /admin/products/{id}
 POST   /admin/products/{id}/publish
 POST   /admin/products/{id}/unpublish
-POST   /admin/products/{id}/images                   multipart (image/jpeg|png|webp, ≤MAX_UPLOAD_MB)
+POST   /admin/products/{id}/images
 DELETE /admin/products/{id}/images/{imageId}
-GET    /admin/products/categories                   все категории (в т.ч. неопубликованные)
-```
+GET    /admin/products/categories
 
-## Admin — services
-
-```
-GET    /admin/services                              ?q=&isPublished=&page=&pageSize=
+GET    /admin/services
 POST   /admin/services
 GET    /admin/services/{id}
 PUT    /admin/services/{id}
 POST   /admin/services/{id}/publish
 POST   /admin/services/{id}/unpublish
-GET    /admin/services/categories                   все категории (в т.ч. неопубликованные)
-```
+GET    /admin/services/categories
 
-## Admin — orders / repairs
-
-```
-GET /admin/orders                                   ?status=&page=&pageSize=
+GET /admin/orders
 GET /admin/orders/{id}
-PUT /admin/orders/{id}/status                       {status: "New"|"Confirmed"|...}
-PUT /admin/orders/{id}/comment                      {comment: string|null}
+PUT /admin/orders/{id}/status
+PUT /admin/orders/{id}/comment
 
-GET /admin/repair-requests                          ?status=&page=&pageSize=
+GET /admin/repair-requests
 GET /admin/repair-requests/{id}
-PUT /admin/repair-requests/{id}/status              {status: "New"|"Contacted"|...}
-PUT /admin/repair-requests/{id}/comment             {comment: string|null}
+PUT /admin/repair-requests/{id}/status
+PUT /admin/repair-requests/{id}/comment
 ```
 
-## Error format (единый)
+## Error envelope
 
 ```json
 {
@@ -79,65 +75,6 @@ PUT /admin/repair-requests/{id}/comment             {comment: string|null}
 }
 ```
 
-Стандартные `code`:
-- `VALIDATION_ERROR` — 400
-- `UNAUTHORIZED` — 401
-- `FORBIDDEN` — 403
-- `NOT_FOUND` — 404
-- `CONFLICT` — 409
-- `INTERNAL_ERROR` — 500 (без `details`, message сокращён)
+Common codes include `VALIDATION_ERROR` (400), `UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `CONFLICT` (409), `FILE_TOO_LARGE`/`UPLOAD_TOO_LARGE` (413), and `RATE_LIMITED` (429).
 
-## DTO примеры
-
-`ProductListItemDto` (localized):
-
-```json
-{
-  "id": "...",
-  "slug": "iphone-12-128gb",
-  "name": "iPhone 12 128GB",
-  "shortDescription": "...",
-  "price": 45000,
-  "currency": "ALL",
-  "condition": "Used",
-  "image": { "path": "/uploads/...", "alt": "..." },
-  "inStock": true
-}
-```
-
-`OrderCreateDto`:
-
-```json
-{
-  "customer": { "fullName": "...", "phone": "+355...", "whatsAppPhone": null, "city": "Durrës", "address": "..." },
-  "deliveryMethod": "LocalCourier",
-  "paymentMethod": "CashOnDelivery",
-  "items": [{ "productId": "...", "quantity": 1 }],
-  "customerComment": null,
-  "consent": true
-}
-```
-
-`RepairRequestCreateDto`:
-
-```json
-{
-  "customer": { "fullName": "...", "phone": "+355...", "city": "Durrës" },
-  "serviceId": null,
-  "deviceType": "phone",
-  "brand": "Apple",
-  "model": "iPhone 12",
-  "problemDescription": "...",
-  "preferredDeliveryMethod": "StorePickup",
-  "customerComment": null,
-  "consent": true
-}
-```
-
-## Versioning
-
-- Все public endpoints — под `/api/v1`. Breaking changes — новый `/v2`, не ломать `/v1` до явного решения в `DECISIONS.md`.
-
-## Swagger
-
-- Включён только в `Development` + опционально в `Staging`. В production — отключён или защищён.
+Breaking contract changes require a new version prefix; existing `/v1` behavior should not be silently changed.

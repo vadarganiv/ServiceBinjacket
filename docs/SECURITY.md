@@ -1,88 +1,62 @@
 # Security
 
-MVP-уровень, но всерьёз.
+This document describes controls implemented in the repository and the remaining limitations. It is not a claim of independent security certification.
 
-## Admin auth
+## Administrator authentication
 
-- Passwords хэшируются (BCrypt cost ≥ 12 или Argon2id). Никаких plaintext.
-- Default admin создаётся при первом запуске из `ADMIN_DEFAULT_EMAIL` / `ADMIN_DEFAULT_PASSWORD`, password при логине должен быть сразу сменён (TODO).
-- `/admin/*` UI и `/api/v1/admin/*` + `/api/v1/auth/*` (кроме login) — требуют auth.
-- Logout инвалидирует session/token.
-- 401 без `details`, 403 для авторизованных без прав.
-- Rate limit на login: ≥ 5 неудач за минуту → блок IP на 10 минут (минимум).
+- Passwords are hashed with BCrypt using work factor 12.
+- An eight-hour JWT is stored in the `sb_admin_token` HttpOnly cookie.
+- The cookie uses `SameSite=Lax`; `Secure` is enabled when the original request is HTTPS (after forwarded-header processing).
+- Logout records `LastLogoutAt`; tokens issued at or before that timestamp are rejected.
+- All `/api/v1/admin/*` controllers and the authenticated auth endpoints use `[Authorize]`.
+- Login is limited to five attempts per IP in a ten-minute sliding window.
+- Production startup always rejects a missing/placeholder JWT secret. Administrator bootstrap credentials are required and validated only while the database has no administrator; remove them from the runtime environment after the first successful bootstrap.
+
+The default administrator is bootstrap functionality, not an account-management system. MFA, password reset/change UI, account lockout, refresh tokens, and explicit antiforgery tokens are not implemented. Password rotation currently requires an explicit administrative database operation followed by session invalidation; this limitation should be addressed before using the project for a real business.
 
 ## File uploads
 
-- Допустимые MIME: `image/jpeg`, `image/png`, `image/webp`, `video/mp4`, `application/pdf` (для repair file). Все остальные — 400.
-- Max size — из `MAX_UPLOAD_MB` (default 25). Превышение — 413.
-- Имя файла на диске генерируется (`{guid}{ext}`). Оригинальное — только в БД.
-- Path traversal: проверять что итоговый path внутри `UPLOADS_ROOT`.
-- Загруженные файлы отдавать со статичных путей nginx, **никогда** не выполнять как код.
-- Антивирус не обязателен в MVP, но логировать любые анормальные размеры/типы.
+Public repair attachments allow JPEG, PNG, WebP, MP4, and PDF. Product images allow JPEG, PNG, and WebP only.
 
-## Input validation
+Before anything is written, the API verifies:
 
-- На бэке через FluentValidation — для всех POST/PUT public + admin.
-- На фронте через Zod — UX, не safety. Не доверять.
-- Не возвращать stack trace в production.
+1. A recognized extension is present.
+2. The browser-provided MIME agrees with that extension.
+3. Magic bytes agree with the expected format.
+4. The per-file, file-count, combined-size, and transport limits are satisfied.
 
-## Secrets
+Stored names are generated GUIDs with a normalized trusted extension. `Path.GetFileName` strips client path components from the original display name. The public repair upload endpoint is also rate-limited.
 
-- Только в `.env` (не коммитится). `.env.example` всегда в репо с placeholders.
-- `JWT_SECRET` / cookie key — минимум 32 байта random. Уникален per environment.
-- DB password — не дефолт, всегда меняется в prod.
-- Никаких секретов в логах.
+Known limitation: this MVP stores uploads on a local volume and serves them from `/uploads`. Repair attachment URLs contain generated GUID names but are not protected by administrator authorization. Before accepting sensitive documents in a real deployment, move repair files to private object storage or an authenticated download endpoint and add malware scanning.
 
-## Logging (Serilog)
+## Secrets and production configuration
 
-Логируем:
-- order created (id, без card-данных)
-- repair request created (id)
-- status changes (entity, old, new, admin id)
-- API ошибки (без request body для auth)
-- upload errors
-- login failures (email + IP, без password)
+- `.env` is ignored; `.env.example` contains placeholders only.
+- Generate independent high-entropy JWT, administrator, and database credentials for each environment.
+- Do not put production secrets into image layers, source control, logs, screenshots, or support messages.
+- Use a managed secret store when the hosting platform provides one.
+- HTTPS is required for a real public deployment; do not publish the HTTP-by-IP demo URL.
 
-Не логируем: passwords, tokens, JWT, secret keys, full uploaded file contents.
+## HTTP boundary
 
-## HTTPS
+Nginx sets baseline security headers, blocks unsafe methods on frontend/static routes, limits request rates and connections, and keeps PostgreSQL/backend ports private in the production Compose file. ASP.NET Core processes forwarded headers before authentication.
 
-- Production обязательно HTTPS (Let's Encrypt через nginx).
-- HSTS заголовок включён.
-- `Secure` + `HttpOnly` + `SameSite=Lax` для auth cookies.
-- HTTP → HTTPS 301 редирект на уровне nginx.
+The current Content Security Policy still permits inline script/style behavior required by the present frontend setup. Tightening CSP with nonces is follow-up work.
 
-## CORS
+## Dependency and CI controls
 
-- В MVP frontend и backend — одна origin (через nginx). CORS жёсткий, только same-origin.
-- Для dev — allow `http://localhost:3000`.
+- NuGet audit warnings `NU1901` through `NU1904` are treated as errors.
+- CI restores, checks formatting, tests the backend, lints/type-checks/builds the frontend, and runs `npm audit --audit-level=high`.
+- Dependabot checks NuGet, npm, and GitHub Actions dependencies.
 
-## Headers
+## Incident response outline
 
-Минимум в nginx: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, базовый CSP (TODO).
+If a deployed container may be compromised:
 
-## Container hardening
+1. Isolate it and preserve required forensic artifacts.
+2. Rotate JWT, administrator, database, deployment, registry, and external-service credentials.
+3. Rebuild from a reviewed commit with `--no-cache --pull`.
+4. Inspect database and upload volumes before reuse.
+5. Replace compromised containers/images and verify firewall and outbound-network rules.
 
-- Frontend production image запускается non-root пользователем `nextjs`; runtime root filesystem в compose read-only.
-- Для frontend/backend/nginx в production включены `cap_drop: ALL`, `no-new-privileges`, `pids_limit`, memory/CPU limits и `ulimits`.
-- Writable paths должны быть только явно разрешёнными volumes/tmpfs: uploads volume для backend/nginx и tmpfs для `/tmp` / Next.js cache.
-- Не добавлять Docker socket, `privileged`, `network_mode: host` или bind mount application code в production compose.
-- `API_URL` для Next.js должен указывать только на внутренний backend origin из allowlist (`http://backend:5000` в production; localhost только для dev).
-
-## Edge controls
-
-- Nginx применяет отдельные rate limits для frontend, API, admin и auth endpoints.
-- Unsafe HTTP methods на frontend pages и `/uploads/` блокируются; POST/PUT/DELETE должны идти только в backend `/api/` endpoints.
-- Подозрительные пути (`.env`, `.git`, WordPress/PHP probes, package/compose manifests и т.п.) логируются security-форматом и возвращают 404.
-- Upload/API body limits задаются на edge; увеличивать их только вместе с backend validation.
-
-## Incident recovery checklist
-
-После подозрения на RCE/компрометацию контейнера:
-
-1. Считать текущий image/container недоверенным, остановить его и не переиспользовать filesystem слои.
-2. Ротировать все секреты из `.env`: `JWT_SECRET`, admin password, DB password, deploy tokens, registry credentials и любые внешние API keys. Значения секретов не выводить в логи и не коммитить.
-3. Выполнить clean rebuild из проверенного commit: `docker compose -f docker-compose.prod.yml build --no-cache --pull` и затем поднять новые контейнеры.
-4. Удалить старые скомпрометированные контейнеры/images после сохранения необходимых forensic artifacts: `docker compose -f docker-compose.prod.yml down --remove-orphans`, затем точечно удалить старые image IDs.
-5. Проверить uploads volume на неожиданные executable/scripts и удалить вредоносные файлы.
-6. На уровне VPS/host firewall ограничить egress контейнеров: разрешить только необходимые направления (например DNS, package registry во время build, внешние сервисы по необходимости), запретить исходящее сканирование приватных/публичных сетей.
+Never paste secret values into logs while investigating.

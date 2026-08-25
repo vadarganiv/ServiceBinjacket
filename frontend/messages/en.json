@@ -214,8 +214,9 @@
     "deliveryPostalShipping": "Postal shipping",
     "deliveryManualAgreement": "Manual agreement",
     "filesSection": "Attach photos/videos (optional)",
-    "filesHint": "Photos or videos of the device (max 25MB per file). Formats: JPG, PNG, WebP, MP4, PDF",
+    "filesHint": "Up to 4 files, 25 MB each and 30 MB total. Formats: JPG, PNG, WebP, MP4, PDF",
     "filesSelect": "Select files",
+    "filesSelected": "{count, plural, one {# file selected} other {# files selected}}",
     "comment": "Additional comment (optional)",
     "commentPlaceholder": "Any other information you would like to share with us",
     "consent": "I agree to the terms of service and processing of personal data",
@@ -224,7 +225,13 @@
     "uploadingFiles": "Uploading files...",
     "errorRequired": "This field is required",
     "errorPhone": "Phone number is invalid",
-    "errorConsent": "You must accept the terms"
+    "errorConsent": "You must accept the terms",
+    "errorFilesCount": "Select no more than 4 files",
+    "errorFileSize": "Each file must be 25 MB or smaller",
+    "errorFilesTotalSize": "The selected files must be 30 MB or smaller in total",
+    "errorUploadFailed": "The attachments could not be uploaded.",
+    "errorNetwork": "Network error. Please try again.",
+    "requestCreatedUploadWarning": "Your repair request was created, but:"
   },
   "cart": {
     "title": "Cart",

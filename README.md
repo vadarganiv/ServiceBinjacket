@@ -1,118 +1,138 @@
 # Servis Binjaket
 
-Albanian-first интернет-магазин электроники + сервис ремонта в Дурресе (Албания).
+Servis Binjaket is a full-stack storefront and repair-request system for an Albanian electronics service business. It is a portfolio project focused on a practical business workflow rather than a generic CRUD demo: a bilingual public catalog, checkout and repair intake are paired with an authenticated administration area.
 
-- **Frontend:** Next.js (App Router) · TypeScript · Tailwind · next-intl — локали `sq` / `en`
-- **Backend:** ASP.NET Core Web API · EF Core · PostgreSQL
-- **Infra:** Docker Compose · Nginx · Let's Encrypt
+The Albanian brand spelling, **Servis Binjaket**, is intentional and is used consistently in the solution and namespaces.
 
-Live: [91.239.6.20](http://91.239.6.20/en/) (HTTP, VPS by IP — domain pending)
+> A public demo is not currently advertised. The previous deployment used an HTTP-only IP address and placeholder data; publish a new link only after HTTPS and representative demo data are ready.
 
-## Screenshots
+## What the project demonstrates
 
-| Storefront | Admin — orders | Admin — order detail |
-|---|---|---|
-| ![Product catalog](docs/screenshots/products.jpg) | ![Admin orders list](docs/screenshots/admin-orders.jpg) | ![Admin order detail](docs/screenshots/admin-order-detail.jpg) |
+- Cleanly separated ASP.NET Core API, application, domain, and infrastructure projects
+- PostgreSQL persistence through EF Core migrations and repository abstractions
+- Next.js App Router UI with Albanian (`sq`) and English (`en`) localization
+- Product catalog filtering, details, cart, cash checkout, and repair intake
+- JWT administrator authentication in an HttpOnly cookie, logout invalidation, and login rate limiting
+- Defensive file uploads with per-file/request limits, extension/MIME/signature agreement, generated storage names, and upload rate limiting
+- Docker Compose deployment behind a hardened Nginx reverse proxy
+- Automated backend tests, frontend lint/type/build checks, dependency auditing, and CI
 
----
+## Technology
 
-## Локальный запуск
+| Area | Stack |
+|---|---|
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS, next-intl |
+| Backend | .NET 10, ASP.NET Core Web API, EF Core, FluentValidation, Serilog |
+| Data | PostgreSQL 16 |
+| Delivery | Docker, Docker Compose, Nginx |
+| Quality | xUnit, FluentAssertions, ESLint, GitHub Actions, Dependabot |
 
-### Вариант 1 — Docker Compose (рекомендуется)
+## Architecture
+
+```text
+Browser (sq/en)
+    |
+    v
+Nginx reverse proxy
+    |-- Next.js application
+    |-- ASP.NET Core API
+            |-- Application use cases
+            |-- Domain model
+            `-- EF Core / PostgreSQL
+```
+
+The backend follows the dependency direction `Api -> Infrastructure -> Application -> Domain`. HTTP request and response DTOs are kept separate from persistence entities. The frontend uses App Router route segments and feature folders; server components perform server-side reads while interactive forms and admin views remain client components.
+
+## Run with Docker Compose
+
+Prerequisite: Docker with the Compose plugin.
 
 ```bash
 cp .env.example .env
-# При необходимости отредактировать .env
-
 docker compose up --build
 ```
 
-| Сервис   | URL                                |
-|----------|------------------------------------|
-| Frontend | http://localhost:3000  (→ `/sq`)   |
-| Backend  | http://localhost:5000/api/v1       |
-| Swagger  | http://localhost:5000/swagger      |
-| Postgres | localhost:5432                     |
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 (redirects to `/sq`) |
+| API | http://localhost:5000/api/v1 |
+| Swagger UI | http://localhost:5000/swagger |
+| PostgreSQL | localhost:5432 |
 
-### Вариант 2 — Раздельный запуск
+The values marked `change_me` are development placeholders. The backend deliberately refuses to start in `Production` when the JWT secret or default administrator password is missing, weak, or still a placeholder.
 
-**Postgres** (нужен Docker):
+## Run the applications separately
+
+Prerequisites: .NET SDK 10, Node.js 24, npm, and PostgreSQL 16 (the database can run through Docker).
 
 ```bash
 docker compose up -d postgres
+
+cd backend
+dotnet restore
+dotnet run --project src/ServisBinjaket.Api
 ```
 
-**Backend:**
+In another terminal:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+## Quality checks
+
+Run the same checks used by CI:
 
 ```bash
 cd backend
 dotnet restore
-dotnet build
-dotnet run --project src/ServisBinjaket.Api
+dotnet format ServisBinjaket.sln --verify-no-changes --no-restore
+dotnet test ServisBinjaket.sln --configuration Release --no-restore
+dotnet list ServisBinjaket.sln package --vulnerable --include-transitive --no-restore
 ```
-
-**Frontend:**
 
 ```bash
 cd frontend
-npm install
-npm run dev
+npm ci
+npm run lint
+npm run typecheck
+npm run build
+npm audit --audit-level=high
 ```
 
----
+NuGet advisories are treated as build errors. The lockfile is committed so CI and local installs resolve the same frontend dependency graph.
 
-## Тесты
+## Configuration highlights
 
-```bash
-# Backend unit + integration
-cd backend && dotnet test
+| Variable | Purpose | Development default |
+|---|---|---|
+| `DATABASE_CONNECTION_STRING` | PostgreSQL connection | Local Compose database |
+| `JWT_SECRET` | Administrator JWT signing key | Placeholder; rejected in Production |
+| `ADMIN_DEFAULT_EMAIL` | First administrator email | Required only while bootstrapping an empty Production database |
+| `ADMIN_DEFAULT_PASSWORD` | First administrator password | Required only for first bootstrap; placeholder/short values are rejected |
+| `CORS_ORIGINS` | Comma-separated browser origins | `http://localhost:3000` |
+| `MAX_UPLOAD_MB` | Maximum size of one attachment | `25` |
+| `MAX_UPLOAD_FILES` | Maximum attachments per repair upload | `4` |
+| `MAX_UPLOAD_TOTAL_MB` | Maximum combined attachment size | `30` |
 
-# Frontend type-check
-cd frontend && npm run build
-```
+See [`.env.example`](.env.example) for the complete list. Production deployment should use HTTPS, unique secrets, a non-default database password, and real business contact details.
 
----
+## Documentation
 
-## Production deploy
+- [Architecture](docs/ARCHITECTURE.md)
+- [API](docs/API.md)
+- [Data model](docs/DATA_MODEL.md)
+- [Internationalization](docs/I18N.md)
+- [Security](docs/SECURITY.md)
+- [Deployment](docs/DEPLOYMENT.md)
+- [Architecture decisions](docs/DECISIONS.md)
 
-Полная инструкция: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
+## Scope
 
-### Быстрый старт (VPS, HTTP без домена)
+This version supports cash payment workflows only (`CashOnDelivery` and `CashInStore`). Online card processing, object storage, antivirus scanning, and automated HTTPS certificate provisioning are intentionally documented as follow-up work rather than presented as completed features.
 
-```bash
-# 1. Клонировать репо на VPS
-git clone <repo-url> /opt/servis-binjaket
-cd /opt/servis-binjaket
+## License
 
-# 2. Настроить env (заполнить все change_me)
-cp .env.example .env
-nano .env
-
-# 3. Запустить
-docker compose -f docker-compose.prod.yml up -d --build
-
-# 4. Проверить
-curl http://<VPS_IP>/health
-```
-
-Сайт будет доступен по: `http://<VPS_IP>/`
-
-### Переход на HTTPS (когда появится домен)
-
-Пошаговая инструкция в [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — раздел «Переход на HTTPS».
-
----
-
-## Структура репозитория
-
-```
-backend/                  — ASP.NET Core solution (Clean Architecture)
-frontend/                 — Next.js app (App Router + i18n)
-nginx/nginx.conf          — Nginx reverse proxy (HTTP + закомментированный HTTPS)
-scripts/backup-db.sh      — Backup базы данных
-scripts/restore-db.sh     — Restore базы данных
-docs/                     — Проектная документация
-docker-compose.yml        — Локальная разработка
-docker-compose.prod.yml   — Production
-.env.example              — Шаблон переменных окружения
-```
+[MIT](LICENSE)

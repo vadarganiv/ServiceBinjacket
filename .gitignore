@@ -8,6 +8,7 @@ obj/
 .vs/
 _ReSharper*/
 *.DotSettings.user
+*.lscache
 TestResults/
 *.trx
 *.coverage
@@ -41,7 +42,7 @@ next-env.d.ts
 !.env.example
 
 # ── Uploads (runtime volume, not tracked) ─────────────────────────────────────
-uploads/
+/uploads/
 /backend/uploads/
 
 # ── IDE ───────────────────────────────────────────────────────────────────────
